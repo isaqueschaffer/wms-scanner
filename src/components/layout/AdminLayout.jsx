@@ -1,5 +1,5 @@
 import { Link, Outlet, useLocation } from 'react-router-dom'
-import { supabase } from '../lib/supabase'
+import { supabase } from '../../lib/supabase'
 import { Users, FolderOpen, Package, Barcode, ShieldAlert, LogOut } from 'lucide-react'
 
 export function AdminLayout() {

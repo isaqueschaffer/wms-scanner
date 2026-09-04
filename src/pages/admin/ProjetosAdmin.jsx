@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
-import { supabase } from '../lib/supabase'
+import { supabase } from '../../lib/supabase'
 import { Link } from 'react-router-dom'
-import { Modal } from '../components/ui/Modal'
-import { DataTable } from '../components/DataTable'
+import { Modal } from '../../components/ui/Modal'
+import { DataTable } from '../../components/ui/DataTable'
 import { Pencil, Trash2, Plus, Loader2, List } from 'lucide-react'
 
 export function ProjetosAdmin() {

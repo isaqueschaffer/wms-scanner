@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
-import { supabase } from '../lib/supabase'
+import { supabase } from '../../lib/supabase'
 import { Search, Loader2, Database, ShieldAlert, Activity } from 'lucide-react'
-import { DataTable } from '../components/DataTable'
+import { DataTable } from '../../components/ui/DataTable'
 
 export function AuditoriaAdmin() {
   const [logs, setLogs] = useState([])

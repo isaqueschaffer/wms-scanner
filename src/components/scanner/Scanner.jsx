@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { supabase } from '../lib/supabase'
-import { useAudio } from '../hooks/useAudio'
-import { useToast } from '../hooks/useToast'
-import { ToastContainer } from './ToastContainer'
+import { supabase } from '../../lib/supabase'
+import { useAudio } from '../../hooks/useAudio'
+import { useToast } from '../../hooks/useToast'
+import { ToastContainer } from '../ui/ToastContainer'
 import { ProductModal } from './ProductModal'
 import * as XLSX from 'xlsx'
 import {

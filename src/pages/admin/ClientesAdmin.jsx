@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
-import { supabase } from '../lib/supabase'
-import { Modal } from '../components/ui/Modal'
-import { DataTable } from '../components/DataTable'
+import { supabase } from '../../lib/supabase'
+import { Modal } from '../../components/ui/Modal'
+import { DataTable } from '../../components/ui/DataTable'
 import { Pencil, Trash2, Plus, Loader2 } from 'lucide-react'
 
 export function ClientesAdmin() {

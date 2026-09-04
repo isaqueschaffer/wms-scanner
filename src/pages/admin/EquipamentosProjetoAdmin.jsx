@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { supabase } from '../lib/supabase'
+import { supabase } from '../../lib/supabase'
 import { Loader2, ArrowLeft, Trash2 } from 'lucide-react'
-import { DataTable } from '../components/DataTable'
+import { DataTable } from '../../components/ui/DataTable'
 
 export function EquipamentosProjetoAdmin() {
   const { id } = useParams() // ID do projeto
