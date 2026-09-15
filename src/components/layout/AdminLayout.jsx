@@ -1,6 +1,6 @@
 import { Link, Outlet, useLocation } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
-import { Users, FolderOpen, Package, Barcode, ShieldAlert, LogOut } from 'lucide-react'
+import { Users, FolderOpen, Package, Barcode, ShieldAlert, LogOut, Kanban, CalendarDays, HardHat, ArrowRightLeft } from 'lucide-react'
 
 export function AdminLayout() {
   const location = useLocation()
@@ -8,7 +8,11 @@ export function AdminLayout() {
   const navItems = [
     { path: '/admin/clientes', icon: Users, label: 'Clientes' },
     { path: '/admin/projetos', icon: FolderOpen, label: 'Projetos' },
+    { path: '/admin/kanban', icon: Kanban, label: 'Kanban' },
+    { path: '/admin/reunioes', icon: CalendarDays, label: 'Reuniões' },
+    { path: '/admin/tecnicos', icon: HardHat, label: 'Técnicos' },
     { path: '/admin/produtos', icon: Package, label: 'Produtos' },
+    { path: '/admin/alocacoes', icon: ArrowRightLeft, label: 'Alocações' },
     { path: '/admin/auditoria', icon: ShieldAlert, label: 'Auditoria' },
   ]
 

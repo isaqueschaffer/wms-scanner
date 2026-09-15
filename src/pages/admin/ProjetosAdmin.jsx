@@ -14,7 +14,13 @@ export function ProjetosAdmin() {
   const [editId, setEditId] = useState(null)
   const [nome, setNome] = useState('')
   const [clienteId, setClienteId] = useState('')
+  const [servicos, setServicos] = useState([])
+  const [escopo, setEscopo] = useState('')
   const [saving, setSaving] = useState(false)
+
+  const SERVICOS_DISPONIVEIS = [
+    'CFTV', 'GPON', 'EPON', 'Automação', 'Controle de Acesso', 'Redes Estruturadas', 'PABX', 'Demonstração'
+  ]
 
   async function fetchData() {
     setLoading(true)
@@ -35,6 +41,8 @@ export function ProjetosAdmin() {
     setEditId(null)
     setNome('')
     setClienteId('')
+    setServicos([])
+    setEscopo('')
     setModalOpen(true)
   }
 
@@ -42,6 +50,8 @@ export function ProjetosAdmin() {
     setEditId(p.id)
     setNome(p.nome)
     setClienteId(p.cliente_id)
+    setServicos(p.servicos || [])
+    setEscopo(p.escopo || '')
     setModalOpen(true)
   }
 
@@ -50,10 +60,12 @@ export function ProjetosAdmin() {
     if (!nome.trim() || !clienteId) return
     setSaving(true)
 
+    const payload = { nome: nome.trim(), cliente_id: clienteId, servicos, escopo: escopo.trim() }
+
     if (editId) {
-      await supabase.from('projetos').update({ nome: nome.trim(), cliente_id: clienteId }).eq('id', editId)
+      await supabase.from('projetos').update(payload).eq('id', editId)
     } else {
-      await supabase.from('projetos').insert({ nome: nome.trim(), cliente_id: clienteId })
+      await supabase.from('projetos').insert(payload)
     }
 
     setSaving(false)
@@ -97,6 +109,16 @@ export function ProjetosAdmin() {
             columns={[
               { key: 'nome', label: 'Nome do Projeto', render: (p) => <span className="font-semibold text-white">{p.nome}</span> },
               { key: 'cliente', label: 'Cliente', render: (p) => <span className="text-slate-400">{p.clientes?.nome}</span> },
+              { key: 'servicos', label: 'Serviços', render: (p) => (
+                  <div className="flex flex-wrap gap-1">
+                    {(p.servicos || []).map(s => (
+                      <span key={s} className="px-2 py-0.5 rounded text-xs font-semibold bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                        {s}
+                      </span>
+                    ))}
+                  </div>
+                )
+              },
               {
                 key: 'actions',
                 label: 'Ações',
@@ -140,6 +162,35 @@ export function ProjetosAdmin() {
               value={nome}
               onChange={e => setNome(e.target.value)}
               className="w-full px-4 py-3 rounded-xl bg-[#0f172a] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-slate-300 mb-2">Serviços</label>
+            <div className="flex flex-wrap gap-2">
+              {SERVICOS_DISPONIVEIS.map(s => (
+                <label key={s} className="flex items-center gap-2 cursor-pointer bg-[#0f172a] border border-[#1e3a5f] px-3 py-2 rounded-lg hover:border-blue-500/50 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={servicos.includes(s)}
+                    onChange={(e) => {
+                      if (e.target.checked) setServicos([...servicos, s])
+                      else setServicos(servicos.filter(item => item !== s))
+                    }}
+                    className="w-4 h-4 rounded border-[#1e3a5f] bg-[#0f172a] checked:bg-blue-600 cursor-pointer"
+                  />
+                  <span className="text-sm text-slate-300">{s}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-slate-300 mb-2">Escopo do Projeto</label>
+            <textarea
+              value={escopo}
+              onChange={e => setEscopo(e.target.value)}
+              rows={4}
+              className="w-full px-4 py-3 rounded-xl bg-[#0f172a] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500 resize-none"
+              placeholder="Descreva as características e escopo deste projeto..."
             />
           </div>
           <div className="flex justify-end gap-3 pt-4">

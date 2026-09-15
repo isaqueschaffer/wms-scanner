@@ -53,17 +53,21 @@ export function Scanner({ session, onReset }) {
     if (phase === PHASE.SN)  { setTimeout(() => snRef.current?.focus(),  50) }
   }, [phase])
 
-  // ── F2 para destravar EAN ──────────────────────────────────────────────────
+  // ── Atalhos Globais ────────────────────────────────────────────────────────
   useEffect(() => {
     function handleGlobalKey(e) {
       if (e.key === 'F2') {
         e.preventDefault()
         unlockEan()
       }
+      if (e.key === 'F10') {
+        e.preventDefault()
+        onReset()
+      }
     }
     window.addEventListener('keydown', handleGlobalKey)
     return () => window.removeEventListener('keydown', handleGlobalKey)
-  }, [])
+  }, [onReset])
 
   // ── Destravar / Resetar ────────────────────────────────────────────────────
   function unlockEan() {
@@ -297,7 +301,7 @@ export function Scanner({ session, onReset }) {
               hover:bg-slate-700/60 transition-all
             "
           >
-            <RotateCcw size={14} /> Nova Sessão
+            <RotateCcw size={14} /> Finalizar Bipagem (F10)
           </button>
         </div>
       </header>
@@ -505,12 +509,16 @@ export function Scanner({ session, onReset }) {
             </div>
           )}
 
-          {/* Instrução F2 */}
+          {/* Instrução F2 e F10 */}
           {phase === PHASE.SN && (
-            <div className="bg-[#111827] border border-slate-800 rounded-2xl p-4">
+            <div className="bg-[#111827] border border-slate-800 rounded-2xl p-4 space-y-3">
               <div className="flex items-center gap-3">
                 <kbd className="px-3 py-1 rounded-lg bg-slate-700 border border-slate-600 font-mono text-sm text-white font-bold">F2</kbd>
                 <p className="text-xs text-slate-400">Trocar de EAN / nova caixa</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <kbd className="px-3 py-1 rounded-lg bg-slate-700 border border-slate-600 font-mono text-sm text-white font-bold">F10</kbd>
+                <p className="text-xs text-slate-400">Finalizar bipagem atual</p>
               </div>
             </div>
           )}

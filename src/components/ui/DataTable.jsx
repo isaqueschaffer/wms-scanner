@@ -8,7 +8,8 @@ export function DataTable({
   dateKey = null,
   idKey = 'id',
   onDeleteMany = null,
-  emptyMessage = 'Nenhum registro encontrado.'
+  emptyMessage = 'Nenhum registro encontrado.',
+  rowClassName = null
 }) {
   const [busca, setBusca] = useState('')
   const [dataInicio, setDataInicio] = useState('')
@@ -192,7 +193,7 @@ export function DataTable({
               </tr>
             ) : (
               dadosPaginados.map((item, index) => (
-                <tr key={item[idKey] || index} className="border-b border-[#1e3a5f]/30 hover:bg-[#1e3a5f]/10 transition-colors">
+                <tr key={item[idKey] || index} className={`border-b border-[#1e3a5f]/30 transition-colors ${rowClassName ? rowClassName(item) : 'hover:bg-[#1e3a5f]/10'}`}>
                   {onDeleteMany && (
                     <td className="p-4 text-center">
                       <input
