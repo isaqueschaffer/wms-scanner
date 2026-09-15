@@ -1,6 +1,6 @@
 import { Link, Outlet, useLocation } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
-import { Users, FolderOpen, Package, Barcode, ShieldAlert, LogOut, Kanban, CalendarDays, HardHat, ArrowRightLeft } from 'lucide-react'
+import { Users, FolderOpen, Package, Barcode, ShieldAlert, LogOut, Kanban, CalendarDays, HardHat, ArrowRightLeft, PenTool } from 'lucide-react'
 
 export function AdminLayout() {
   const location = useLocation()
@@ -12,6 +12,7 @@ export function AdminLayout() {
     { path: '/admin/reunioes', icon: CalendarDays, label: 'Reuniões' },
     { path: '/admin/tecnicos', icon: HardHat, label: 'Técnicos' },
     { path: '/admin/produtos', icon: Package, label: 'Produtos' },
+    { path: '/admin/ferramentas', icon: PenTool, label: 'Ferramentas' },
     { path: '/admin/alocacoes', icon: ArrowRightLeft, label: 'Alocações' },
     { path: '/admin/auditoria', icon: ShieldAlert, label: 'Auditoria' },
   ]

@@ -89,6 +89,22 @@ create table if not exists public.alocacao_equipamentos (
   observacao     text
 );
 
+-- 10. Ferramentas
+create table if not exists public.ferramentas (
+  id                     uuid primary key default gen_random_uuid(),
+  nome                   text not null,
+  categoria              text not null, -- Manual, Rede, Fibra Óptica
+  estado                 text not null, -- Ótimo, Bom, Desgastado
+  quantidade             integer not null default 1,
+  descricao              text,
+  cidade                 text,
+  tecnico_id             uuid references public.tecnicos(id) on delete set null,
+  data_atribuicao        date,
+  data_verificacao       date,
+  observacao_verificacao text,
+  created_at             timestamptz not null default now()
+);
+
 -- RLS (ajuste conforme sua política de autenticação)
 alter table public.clientes    enable row level security;
 alter table public.projetos    enable row level security;
@@ -99,6 +115,7 @@ alter table public.reunioes enable row level security;
 alter table public.etapas enable row level security;
 alter table public.tasks enable row level security;
 alter table public.alocacao_equipamentos enable row level security;
+alter table public.ferramentas enable row level security;
 
 -- Políticas permissivas para uso interno (substitua por políticas reais em produção)
 create policy "allow_all_clientes"     on public.clientes     for all using (true) with check (true);
@@ -110,3 +127,4 @@ create policy "allow_all_reunioes" on public.reunioes for all using (true) with 
 create policy "allow_all_etapas" on public.etapas for all using (true) with check (true);
 create policy "allow_all_tasks" on public.tasks for all using (true) with check (true);
 create policy "allow_all_alocacoes" on public.alocacao_equipamentos for all using (true) with check (true);
+create policy "allow_all_ferramentas" on public.ferramentas for all using (true) with check (true);

@@ -12,6 +12,7 @@ export function TecnicosAdmin() {
   const [editId, setEditId] = useState(null)
   const [nome, setNome] = useState('')
   const [telefone, setTelefone] = useState('')
+  const [cidade, setCidade] = useState('')
   const [ativo, setAtivo] = useState(true)
   const [saving, setSaving] = useState(false)
 
@@ -30,6 +31,7 @@ export function TecnicosAdmin() {
     setEditId(null)
     setNome('')
     setTelefone('')
+    setCidade('')
     setAtivo(true)
     setModalOpen(true)
   }
@@ -38,6 +40,7 @@ export function TecnicosAdmin() {
     setEditId(t.id)
     setNome(t.nome)
     setTelefone(t.telefone || '')
+    setCidade(t.cidade || '')
     setAtivo(t.ativo)
     setModalOpen(true)
   }
@@ -47,7 +50,7 @@ export function TecnicosAdmin() {
     if (!nome.trim()) return
     setSaving(true)
 
-    const payload = { nome: nome.trim(), telefone: telefone.trim(), ativo }
+    const payload = { nome: nome.trim(), telefone: telefone.trim(), cidade: cidade.trim(), ativo }
 
     if (editId) {
       await supabase.from('tecnicos').update(payload).eq('id', editId)
@@ -92,11 +95,12 @@ export function TecnicosAdmin() {
         ) : (
           <DataTable
             data={tecnicos}
-            searchKeys={['nome', 'telefone']}
+            searchKeys={['nome', 'telefone', 'cidade']}
             onDeleteMany={handleDeleteMany}
             emptyMessage="Nenhum técnico encontrado."
             columns={[
               { key: 'nome', label: 'Nome', render: (t) => <span className="font-semibold text-white">{t.nome}</span> },
+              { key: 'cidade', label: 'Cidade', render: (t) => <span className="text-slate-400">{t.cidade || '-'}</span> },
               { key: 'telefone', label: 'Telefone', render: (t) => <span className="text-slate-400">{t.telefone || '-'}</span> },
               { key: 'ativo', label: 'Status', render: (t) => (
                   <span className={`px-2 py-1 rounded text-xs font-semibold ${t.ativo ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
@@ -142,6 +146,15 @@ export function TecnicosAdmin() {
               type="text"
               value={telefone}
               onChange={e => setTelefone(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl bg-[#0f172a] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-slate-300 mb-2">Cidade</label>
+            <input
+              type="text"
+              value={cidade}
+              onChange={e => setCidade(e.target.value)}
               className="w-full px-4 py-3 rounded-xl bg-[#0f172a] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500"
             />
           </div>
