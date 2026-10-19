@@ -89,6 +89,48 @@ create trigger trg_audit_equipamentos
 after insert or update or delete on public.equipamentos
 for each row execute function public.log_auditoria_trigger();
 
+-- Tecnicos
+drop trigger if exists trg_audit_tecnicos on public.tecnicos;
+create trigger trg_audit_tecnicos
+after insert or update or delete on public.tecnicos
+for each row execute function public.log_auditoria_trigger();
+
+-- Reunioes
+drop trigger if exists trg_audit_reunioes on public.reunioes;
+create trigger trg_audit_reunioes
+after insert or update or delete on public.reunioes
+for each row execute function public.log_auditoria_trigger();
+
+-- Etapas
+drop trigger if exists trg_audit_etapas on public.etapas;
+create trigger trg_audit_etapas
+after insert or update or delete on public.etapas
+for each row execute function public.log_auditoria_trigger();
+
+-- Tasks
+drop trigger if exists trg_audit_tasks on public.tasks;
+create trigger trg_audit_tasks
+after insert or update or delete on public.tasks
+for each row execute function public.log_auditoria_trigger();
+
+-- Alocacao de Equipamentos
+drop trigger if exists trg_audit_alocacao_equipamentos on public.alocacao_equipamentos;
+create trigger trg_audit_alocacao_equipamentos
+after insert or update or delete on public.alocacao_equipamentos
+for each row execute function public.log_auditoria_trigger();
+
+-- Ferramentas
+drop trigger if exists trg_audit_ferramentas on public.ferramentas;
+create trigger trg_audit_ferramentas
+after insert or update or delete on public.ferramentas
+for each row execute function public.log_auditoria_trigger();
+
+-- Atribuicao de Ferramentas
+drop trigger if exists trg_audit_atribuicao_ferramentas on public.atribuicao_ferramentas;
+create trigger trg_audit_atribuicao_ferramentas
+after insert or update or delete on public.atribuicao_ferramentas
+for each row execute function public.log_auditoria_trigger();
+
 -- 4. Ajustar políticas RLS existentes para exigir autenticação em vez de "anon"
 -- Se você usou "for all using (true)", recomendo mudar para "to authenticated":
 drop policy if exists "allow_all_clientes" on public.clientes;

@@ -1,46 +1,40 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
-import { Loader2, Plus, PenTool, Edit, Trash2, X } from 'lucide-react'
+import { Loader2, Plus, PenTool, Edit, Trash2, X, History } from 'lucide-react'
 import { DataTable } from '../../components/ui/DataTable'
 
-function FerramentaModal({ ferramenta, tecnicos, onClose, onUpdate }) {
+function FerramentaModal({ ferramenta, tipos, onClose, onUpdate }) {
   const isEditing = !!ferramenta
   const [loading, setLoading] = useState(false)
 
   // Form State
-  const [nome, setNome] = useState(ferramenta?.nome || '')
-  const [categoria, setCategoria] = useState(ferramenta?.categoria || 'Manual')
+  const [tipoId, setTipoId] = useState(ferramenta?.tipo_id || '')
   const [estado, setEstado] = useState(ferramenta?.estado || 'Ótimo')
-  const [quantidade, setQuantidade] = useState(ferramenta?.quantidade || 1)
+  const [identificador, setIdentificador] = useState(ferramenta?.identificador || '')
   const [descricao, setDescricao] = useState(ferramenta?.descricao || '')
   const [cidade, setCidade] = useState(ferramenta?.cidade || '')
-  const [tecnicoId, setTecnicoId] = useState(ferramenta?.tecnico_id || '')
-  const [dataAtribuicao, setDataAtribuicao] = useState(ferramenta?.data_atribuicao || '')
-  const [dataVerificacao, setDataVerificacao] = useState(ferramenta?.data_verificacao || '')
-  const [observacaoVerificacao, setObservacaoVerificacao] = useState(ferramenta?.observacao_verificacao || '')
 
-  const CATEGORIAS = ['Manual', 'Rede', 'Fibra Óptica']
   const ESTADOS = ['Ótimo', 'Bom', 'Desgastado']
 
   const handleSave = async (e) => {
     e.preventDefault()
-    if (!nome.trim()) {
-      alert('Preencha o nome da ferramenta')
+    if (!tipoId) {
+      alert('Selecione o tipo de ferramenta')
       return
     }
 
+    const selectedTipo = tipos.find(t => t.id === tipoId)
+
     setLoading(true)
     const payload = {
-      nome: nome.trim(),
-      categoria,
+      tipo_id: tipoId,
+      nome: selectedTipo?.nome || 'Ferramenta',
+      categoria: selectedTipo?.categoria || 'Manual',
       estado,
-      quantidade: parseInt(quantidade) || 1,
+      identificador: identificador.trim() || null,
+      quantidade: 1, // Fixado em 1 pois cada ferramenta passa a ser única
       descricao: descricao.trim() || null,
-      cidade: cidade.trim() || null,
-      tecnico_id: tecnicoId || null,
-      data_atribuicao: dataAtribuicao || null,
-      data_verificacao: dataVerificacao || null,
-      observacao_verificacao: observacaoVerificacao.trim() || null
+      cidade: cidade.trim() || null
     }
 
     let error;
@@ -48,8 +42,15 @@ function FerramentaModal({ ferramenta, tecnicos, onClose, onUpdate }) {
       const res = await supabase.from('ferramentas').update(payload).eq('id', ferramenta.id)
       error = res.error
     } else {
-      const res = await supabase.from('ferramentas').insert(payload)
+      const res = await supabase.from('ferramentas').insert(payload).select().single()
       error = res.error
+      if (!error && res.data) {
+        await supabase.from('historico_ferramentas').insert({
+          ferramenta_id: res.data.id,
+          acao: 'CADASTRO',
+          detalhes: 'Ferramenta registrada no estoque.'
+        })
+      }
     }
 
     setLoading(false)
@@ -78,25 +79,19 @@ function FerramentaModal({ ferramenta, tecnicos, onClose, onUpdate }) {
         <form onSubmit={handleSave} className="p-6 overflow-y-auto space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
-              <label className="block text-sm font-semibold text-slate-300 mb-2">Nome da Ferramenta *</label>
-              <input
-                type="text"
-                value={nome}
-                onChange={e => setNome(e.target.value)}
+              <label className="block text-sm font-semibold text-slate-300 mb-2">Tipo de Ferramenta (Modelo) *</label>
+              <select
+                value={tipoId}
+                onChange={e => setTipoId(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl bg-[#1e293b] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500"
                 required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-slate-300 mb-2">Categoria *</label>
-              <select
-                value={categoria}
-                onChange={e => setCategoria(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-[#1e293b] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500"
               >
-                {CATEGORIAS.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                <option value="">-- Selecione o Modelo --</option>
+                {tipos.map(t => (
+                  <option key={t.id} value={t.id}>{t.nome} - {t.categoria}</option>
+                ))}
               </select>
+              <p className="text-xs text-slate-500 mt-1">Crie novos modelos na tela de "Tipos de Ferramenta"</p>
             </div>
 
             <div>
@@ -111,14 +106,13 @@ function FerramentaModal({ ferramenta, tecnicos, onClose, onUpdate }) {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-slate-300 mb-2">Quantidade *</label>
+              <label className="block text-sm font-semibold text-slate-300 mb-2">Identificador (Nº Série/Patrimônio)</label>
               <input
-                type="number"
-                min="1"
-                value={quantidade}
-                onChange={e => setQuantidade(e.target.value)}
+                type="text"
+                value={identificador}
+                onChange={e => setIdentificador(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl bg-[#1e293b] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500"
-                required
+                placeholder="Ex: ALI-001"
               />
             </div>
 
@@ -141,52 +135,6 @@ function FerramentaModal({ ferramenta, tecnicos, onClose, onUpdate }) {
                 rows={2}
               />
             </div>
-
-            <div className="md:col-span-2 border-t border-[#1e3a5f] pt-4 mt-2">
-              <h4 className="text-sm font-bold text-blue-400 mb-4 uppercase tracking-widest">Alocação e Verificação</h4>
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-slate-300 mb-2">Técnico Responsável (Opcional)</label>
-              <select
-                value={tecnicoId}
-                onChange={e => setTecnicoId(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-[#1e293b] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500"
-              >
-                <option value="">-- Nenhum --</option>
-                {tecnicos.map(t => <option key={t.id} value={t.id}>{t.nome}</option>)}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-slate-300 mb-2">Data da Atribuição</label>
-              <input
-                type="date"
-                value={dataAtribuicao}
-                onChange={e => setDataAtribuicao(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-[#1e293b] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-slate-300 mb-2">Data da Verificação</label>
-              <input
-                type="date"
-                value={dataVerificacao}
-                onChange={e => setDataVerificacao(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-[#1e293b] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500"
-              />
-            </div>
-
-            <div className="md:col-span-2">
-              <label className="block text-sm font-semibold text-slate-300 mb-2">Observação da Verificação</label>
-              <textarea
-                value={observacaoVerificacao}
-                onChange={e => setObservacaoVerificacao(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-[#1e293b] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500"
-                rows={2}
-              />
-            </div>
           </div>
 
           <div className="pt-6 mt-6 border-t border-[#1e3a5f] flex justify-end gap-3 shrink-0">
@@ -203,23 +151,119 @@ function FerramentaModal({ ferramenta, tecnicos, onClose, onUpdate }) {
   )
 }
 
+function HistoricoModal({ ferramenta, onClose }) {
+  const [historico, setHistorico] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function loadHistorico() {
+      setLoading(true)
+      const { data } = await supabase
+        .from('historico_ferramentas')
+        .select(`
+          *,
+          tecnicos (nome)
+        `)
+        .eq('ferramenta_id', ferramenta.id)
+        .order('created_at', { ascending: false })
+      setHistorico(data || [])
+      setLoading(false)
+    }
+    if(ferramenta) loadHistorico()
+  }, [ferramenta])
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="bg-[#111827] border border-[#1e3a5f] rounded-2xl w-full max-w-3xl shadow-2xl flex flex-col max-h-[90vh]">
+        <div className="flex items-center justify-between p-6 border-b border-[#1e3a5f] shrink-0">
+          <div>
+            <h3 className="text-xl font-bold text-white flex items-center gap-2">
+              <History className="text-blue-500" />
+              Histórico da Ferramenta
+            </h3>
+            <p className="text-sm text-slate-400 mt-1">
+              {ferramenta.identificador ? `[${ferramenta.identificador}] ` : ''}{ferramenta.nome}
+            </p>
+          </div>
+          <button onClick={onClose} className="text-slate-500 hover:text-white p-2 rounded-lg transition-colors">
+            <X size={20} />
+          </button>
+        </div>
+        
+        <div className="p-6 overflow-y-auto space-y-4">
+          {loading ? (
+            <div className="text-center text-slate-500 py-8 flex justify-center gap-2">
+              <Loader2 className="animate-spin" /> Carregando histórico...
+            </div>
+          ) : historico.length === 0 ? (
+            <div className="text-center text-slate-500 py-8">
+              Nenhum histórico registrado para esta ferramenta.
+            </div>
+          ) : (
+            <div className="relative border-l border-[#1e3a5f] ml-3 space-y-6">
+              {historico.map(h => (
+                <div key={h.id} className="relative pl-6">
+                  <div className={`absolute -left-1.5 top-1.5 w-3 h-3 rounded-full border-2 border-[#111827] 
+                    ${h.acao === 'ENTREGA' ? 'bg-blue-500' :
+                      h.acao === 'DEVOLUCAO' ? 'bg-green-500' :
+                      h.acao === 'TRANSFERENCIA' ? 'bg-orange-500' :
+                      h.acao === 'CADASTRO' ? 'bg-purple-500' : 'bg-slate-500'
+                    }`} 
+                  />
+                  <div className="bg-[#1e293b] border border-[#1e3a5f] rounded-xl p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <span className={`text-xs font-bold px-2 py-1 rounded-md
+                        ${h.acao === 'ENTREGA' ? 'bg-blue-500/20 text-blue-400' :
+                          h.acao === 'DEVOLUCAO' ? 'bg-green-500/20 text-green-400' :
+                          h.acao === 'TRANSFERENCIA' ? 'bg-orange-500/20 text-orange-400' :
+                          h.acao === 'CADASTRO' ? 'bg-purple-500/20 text-purple-400' : 'bg-slate-500/20 text-slate-400'
+                        }`}
+                      >
+                        {h.acao}
+                      </span>
+                      <span className="text-xs text-slate-400">
+                        {new Date(h.created_at).toLocaleString()}
+                      </span>
+                    </div>
+                    {h.tecnicos && (
+                      <div className="text-sm text-slate-300 font-semibold mb-1">
+                        Técnico: {h.tecnicos.nome}
+                      </div>
+                    )}
+                    {h.detalhes && (
+                      <div className="text-sm text-slate-400 bg-[#0f172a] p-3 rounded-lg border border-[#1e3a5f]/50">
+                        {h.detalhes}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export function FerramentasAdmin() {
   const [ferramentas, setFerramentas] = useState([])
-  const [tecnicos, setTecnicos] = useState([])
+  const [tipos, setTipos] = useState([])
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
+  const [historicoItem, setHistoricoItem] = useState(null)
   const [editItem, setEditItem] = useState(null)
 
   async function fetchDados() {
     setLoading(true)
     
-    const [resFer, resTec] = await Promise.all([
-      supabase.from('ferramentas').select('*, tecnicos(nome)').order('created_at', { ascending: false }),
-      supabase.from('tecnicos').select('id, nome').eq('ativo', true).order('nome')
+    const [resFer, resTipos] = await Promise.all([
+      supabase.from('ferramentas').select('*').order('created_at', { ascending: false }),
+      supabase.from('tipos_ferramentas').select('*').order('nome')
     ])
 
     if (resFer.data) setFerramentas(resFer.data)
-    if (resTec.data) setTecnicos(resTec.data)
+    if (resTipos.data) setTipos(resTipos.data)
       
     setLoading(false)
   }
@@ -248,12 +292,12 @@ export function FerramentasAdmin() {
             <PenTool className="text-blue-500" size={32} />
             Ferramentas
           </h1>
-          <p className="text-slate-500 mt-2">Gestão de ferramentas, estados de conservação e atribuições.</p>
+          <p className="text-slate-500 mt-2">Catálogo de ferramentas, categorias e estoque total.</p>
         </div>
         
         <button
           onClick={() => { setEditItem(null); setModalOpen(true) }}
-          className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg shadow-blue-500/20"
+          className="w-full md:w-auto bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-500/20"
         >
           <Plus size={20} /> Nova Ferramenta
         </button>
@@ -266,7 +310,7 @@ export function FerramentasAdmin() {
       ) : (
         <DataTable
           data={ferramentas}
-          searchKeys={['nome', 'categoria', 'estado', 'cidade', 'descricao', 'tecnicos.nome']}
+          searchKeys={['nome', 'categoria', 'estado', 'cidade', 'descricao', 'identificador']}
           dateKey="created_at"
           onDeleteMany={handleDeleteMany}
           emptyMessage="Nenhuma ferramenta cadastrada."
@@ -299,31 +343,26 @@ export function FerramentasAdmin() {
                 </span>
               )
             },
-            { key: 'quantidade', label: 'Qtd', tdClassName: 'text-white font-mono' },
+            { 
+              key: 'identificador', 
+              label: 'Identificador', 
+              tdClassName: 'text-white font-mono font-bold text-center',
+              render: (f) => f.identificador || '-'
+            },
             { key: 'cidade', label: 'Cidade', tdClassName: 'text-slate-400' },
-            { 
-              key: 'tecnico', 
-              label: 'Atribuído a', 
-              render: (f) => f.tecnicos?.nome ? <span className="text-blue-400 font-semibold">{f.tecnicos.nome}</span> : <span className="text-slate-600">-</span>
-            },
-            { 
-              key: 'data_atribuicao', 
-              label: 'Atribuição', 
-              tdClassName: 'text-xs text-slate-400',
-              render: (f) => f.data_atribuicao ? new Date(f.data_atribuicao + 'T00:00:00').toLocaleDateString() : '-'
-            },
-            { 
-              key: 'data_verificacao', 
-              label: 'Verificação', 
-              tdClassName: 'text-xs text-slate-400',
-              render: (f) => f.data_verificacao ? new Date(f.data_verificacao + 'T00:00:00').toLocaleDateString() : '-'
-            },
             {
               key: 'actions',
               label: 'Ações',
               tdClassName: 'text-right',
               render: (f) => (
                 <div className="flex items-center justify-end gap-2">
+                  <button 
+                    onClick={() => setHistoricoItem(f)}
+                    className="p-2 text-slate-400 hover:text-purple-400 transition-colors bg-[#0f172a] rounded-lg border border-[#1e3a5f]/50 hover:border-purple-500/30"
+                    title="Ver Histórico"
+                  >
+                    <History size={16} />
+                  </button>
                   <button 
                     onClick={() => { setEditItem(f); setModalOpen(true) }}
                     className="p-2 text-slate-400 hover:text-blue-400 transition-colors bg-[#0f172a] rounded-lg border border-[#1e3a5f]/50 hover:border-blue-500/30"
@@ -348,9 +387,16 @@ export function FerramentasAdmin() {
       {modalOpen && (
         <FerramentaModal
           ferramenta={editItem}
-          tecnicos={tecnicos}
+          tipos={tipos}
           onClose={() => setModalOpen(false)}
           onUpdate={fetchDados}
+        />
+      )}
+
+      {historicoItem && (
+        <HistoricoModal
+          ferramenta={historicoItem}
+          onClose={() => setHistoricoItem(null)}
         />
       )}
     </div>

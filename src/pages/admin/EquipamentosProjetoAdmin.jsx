@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
-import { Loader2, ArrowLeft, Trash2, UserCheck, X } from 'lucide-react'
+import { Loader2, ArrowLeft, Trash2, UserCheck, X, FileText } from 'lucide-react'
 import { DataTable } from '../../components/ui/DataTable'
+import { Modal } from '../../components/ui/Modal'
 
 function EditablePatrimonio({ eq, onUpdate }) {
   const [value, setValue] = useState(eq.n_patrimonio || '')
@@ -67,6 +68,22 @@ export function EquipamentosProjetoAdmin() {
   const [equipamentos, setEquipamentos] = useState([])
   const [loading, setLoading] = useState(true)
   const [alocacaoModal, setAlocacaoModal] = useState(null)
+  const [reportModalOpen, setReportModalOpen] = useState(false)
+
+  // Função para agrupar equipamentos pelo nome do produto
+  const agrupamentoRelatorio = equipamentos.reduce((acc, eq) => {
+    const nome = eq.produtos?.nome || 'Desconhecido'
+    const ean = eq.ean || 'Sem EAN'
+    const key = `${ean}-${nome}`
+    
+    if (!acc[key]) {
+      acc[key] = { ean, nome, count: 0 }
+    }
+    acc[key].count += 1
+    return acc
+  }, {})
+
+  const relatorioData = Object.values(agrupamentoRelatorio).sort((a, b) => b.count - a.count)
 
   async function fetchDados() {
     setLoading(true)
@@ -127,14 +144,14 @@ export function EquipamentosProjetoAdmin() {
   return (
     <div className="max-w-6xl mx-auto">
       {/* Header */}
-      <div className="flex items-center gap-4 mb-8">
+      <div className="flex flex-col md:flex-row items-start md:items-center gap-4 mb-8">
         <Link 
           to="/admin/projetos"
           className="p-3 bg-[#111827] hover:bg-[#1e3a5f]/50 border border-[#1e3a5f] rounded-xl text-slate-400 hover:text-white transition-colors"
         >
           <ArrowLeft size={20} />
         </Link>
-        <div>
+        <div className="flex-1">
           <h1 className="text-2xl font-black text-white">
             {projeto ? projeto.nome : 'Carregando projeto...'}
           </h1>
@@ -142,6 +159,12 @@ export function EquipamentosProjetoAdmin() {
             Cliente: {projeto?.clientes?.nome || '...'}
           </p>
         </div>
+        <button 
+          onClick={() => setReportModalOpen(true)}
+          className="w-full md:w-auto flex justify-center items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold transition-all shadow-lg shadow-blue-600/20"
+        >
+          <FileText size={18} /> Relatório de Quantidades
+        </button>
       </div>
 
       {/* Tabela via DataTable */}
@@ -249,6 +272,54 @@ export function EquipamentosProjetoAdmin() {
           </div>
         </div>
       )}
+
+      {/* Modal de Relatório */}
+      <Modal isOpen={reportModalOpen} onClose={() => setReportModalOpen(false)} title={`Relatório: ${projeto?.nome || 'Projeto'}`}>
+        <div className="space-y-4">
+          <p className="text-sm text-slate-400">Resumo da quantidade de itens bipados neste projeto agrupados por produto.</p>
+          
+          <div className="bg-[#0f172a] border border-[#1e3a5f] rounded-xl overflow-hidden">
+            <table className="w-full text-left border-collapse text-sm">
+              <thead>
+                <tr className="bg-[#111827] border-b border-[#1e3a5f]">
+                  <th className="p-3 font-bold text-slate-400">EAN</th>
+                  <th className="p-3 font-bold text-slate-400">Produto</th>
+                  <th className="p-3 font-bold text-slate-400 text-center">Quantidade</th>
+                </tr>
+              </thead>
+              <tbody>
+                {relatorioData.length === 0 ? (
+                  <tr>
+                    <td colSpan="3" className="p-6 text-center text-slate-500">Nenhum equipamento bipado.</td>
+                  </tr>
+                ) : (
+                  relatorioData.map(item => (
+                    <tr key={`${item.ean}-${item.nome}`} className="border-b border-[#1e3a5f]/50 hover:bg-[#1e3a5f]/30">
+                      <td className="p-3 font-mono text-slate-300">{item.ean}</td>
+                      <td className="p-3 text-white font-semibold">{item.nome}</td>
+                      <td className="p-3 text-center text-blue-400 font-black text-lg">{item.count}</td>
+                    </tr>
+                  ))
+                )}
+                
+                {/* Linha de Total */}
+                {relatorioData.length > 0 && (
+                  <tr className="bg-[#111827]">
+                    <td colSpan="2" className="p-3 text-right text-slate-400 font-bold uppercase tracking-wider">Total de Itens:</td>
+                    <td className="p-3 text-center text-white font-black text-xl">{equipamentos.length}</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+          
+          <div className="flex justify-end pt-4">
+            <button onClick={() => setReportModalOpen(false)} className="px-5 py-2.5 rounded-xl bg-slate-800 text-slate-300 font-semibold hover:bg-slate-700">
+              Fechar
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }

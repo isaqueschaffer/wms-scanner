@@ -89,7 +89,7 @@ create table if not exists public.alocacao_equipamentos (
   observacao     text
 );
 
--- 10. Ferramentas
+-- 10. Ferramentas (Cadastro Base)
 create table if not exists public.ferramentas (
   id                     uuid primary key default gen_random_uuid(),
   nome                   text not null,
@@ -98,8 +98,16 @@ create table if not exists public.ferramentas (
   quantidade             integer not null default 1,
   descricao              text,
   cidade                 text,
-  tecnico_id             uuid references public.tecnicos(id) on delete set null,
-  data_atribuicao        date,
+  created_at             timestamptz not null default now()
+);
+
+-- 11. Atribuição de Ferramentas a Técnicos
+create table if not exists public.atribuicao_ferramentas (
+  id                     uuid primary key default gen_random_uuid(),
+  ferramenta_id          uuid not null references public.ferramentas(id) on delete cascade,
+  tecnico_id             uuid not null references public.tecnicos(id) on delete cascade,
+  quantidade             integer not null default 1,
+  data_atribuicao        date not null default CURRENT_DATE,
   data_verificacao       date,
   observacao_verificacao text,
   created_at             timestamptz not null default now()
@@ -116,6 +124,7 @@ alter table public.etapas enable row level security;
 alter table public.tasks enable row level security;
 alter table public.alocacao_equipamentos enable row level security;
 alter table public.ferramentas enable row level security;
+alter table public.atribuicao_ferramentas enable row level security;
 
 -- Políticas permissivas para uso interno (substitua por políticas reais em produção)
 create policy "allow_all_clientes"     on public.clientes     for all using (true) with check (true);
@@ -128,3 +137,4 @@ create policy "allow_all_etapas" on public.etapas for all using (true) with chec
 create policy "allow_all_tasks" on public.tasks for all using (true) with check (true);
 create policy "allow_all_alocacoes" on public.alocacao_equipamentos for all using (true) with check (true);
 create policy "allow_all_ferramentas" on public.ferramentas for all using (true) with check (true);
+create policy "allow_all_atribuicao_ferramentas" on public.atribuicao_ferramentas for all using (true) with check (true);

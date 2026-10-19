@@ -2,12 +2,172 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { Modal } from '../../components/ui/Modal'
 import { DataTable } from '../../components/ui/DataTable'
-import { Pencil, Trash2, Plus, Loader2 } from 'lucide-react'
+import { Pencil, Trash2, Plus, Loader2, PenTool, Check } from 'lucide-react'
+
+function EditableAtribuicao({ a }) {
+  const [estado, setEstado] = useState(a.ferramentas?.estado || 'Ótimo')
+  const [obs, setObs] = useState(a.observacao_verificacao || '')
+  const [dataVerificacao, setDataVerificacao] = useState(a.data_verificacao || new Date().toISOString().split('T')[0])
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+
+  const ESTADOS = ['Ótimo', 'Bom', 'Desgastado']
+
+  async function handleSave() {
+    setSaving(true)
+    setSaved(false)
+    const { error: errAttr } = await supabase.from('atribuicao_ferramentas')
+      .update({ 
+        observacao_verificacao: obs.trim() || null,
+        data_verificacao: dataVerificacao || null
+      })
+      .eq('id', a.id)
+      
+    const { error: errFerr } = await supabase.from('ferramentas')
+      .update({ estado })
+      .eq('id', a.ferramenta_id)
+      
+    if (!errAttr && !errFerr) {
+      await supabase.from('historico_ferramentas').insert({
+        ferramenta_id: a.ferramenta_id,
+        tecnico_id: a.tecnico_id,
+        acao: 'VERIFICACAO',
+        detalhes: `Estado: ${estado}. ${obs ? 'Obs: '+obs.trim() : ''}`
+      })
+    }
+    
+    setSaving(false)
+    if (errAttr || errFerr) {
+      alert('Erro ao atualizar: ' + (errAttr?.message || errFerr?.message))
+    } else {
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
+    }
+  }
+
+  // Calcular dias desde a última verificação ou atribuição
+  const dataRefStr = a.data_verificacao || a.data_atribuicao
+  const dataRef = new Date(dataRefStr + 'T00:00:00')
+  const hoje = new Date()
+  const diffTime = Math.abs(hoje - dataRef)
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) - 1 // -1 para compensar o mesmo dia
+  const isVencido = diffDays >= 15
+
+  return (
+    <div className={`p-4 rounded-xl border ${isVencido ? 'bg-red-500/10 border-red-500/50' : 'bg-[#0f172a] border-[#1e3a5f]'}`}>
+      <div className="flex justify-between items-start mb-4">
+        <div>
+          <h4 className={`font-bold text-lg ${isVencido ? 'text-red-400' : 'text-white'}`}>
+            {a.ferramentas?.identificador ? `[${a.ferramentas.identificador}] ` : ''}{a.ferramentas?.nome}
+          </h4>
+          <p className="text-xs text-slate-400 mt-1">Categoria: {a.ferramentas?.categoria}</p>
+          {isVencido && (
+            <p className="text-xs font-bold text-red-400 mt-1">
+              ⚠️ Verificação pendente ({diffDays} dias sem checagem)
+            </p>
+          )}
+        </div>
+        <div className="text-right">
+          <div className="text-xs text-slate-500">
+            Atribuído: {a.data_atribuicao ? new Date(a.data_atribuicao + 'T00:00:00').toLocaleDateString() : '-'}
+          </div>
+        </div>
+      </div>
+      
+      <div className="flex flex-col md:flex-row gap-3">
+        <div className="w-full md:w-1/4">
+          <label className="block text-xs font-semibold text-slate-400 mb-1">Estado</label>
+          <select 
+            value={estado} 
+            onChange={e => setEstado(e.target.value)}
+            className="w-full px-3 py-2 rounded-lg bg-[#1e293b] border border-[#1e3a5f] text-sm text-white focus:outline-none focus:border-blue-500"
+          >
+            <option value="">-- Selecione --</option>
+            {ESTADOS.map(est => <option key={est} value={est}>{est}</option>)}
+          </select>
+        </div>
+        <div className="w-full md:w-1/4">
+          <label className="block text-xs font-semibold text-slate-400 mb-1">Data Verificação</label>
+          <input 
+            type="date" 
+            value={dataVerificacao} 
+            onChange={e => setDataVerificacao(e.target.value)}
+            className={`w-full px-3 py-2 rounded-lg bg-[#1e293b] border ${isVencido ? 'border-red-500/50' : 'border-[#1e3a5f]'} text-sm text-white focus:outline-none focus:border-blue-500`}
+          />
+        </div>
+        <div className="w-full md:flex-1">
+          <label className="block text-xs font-semibold text-slate-400 mb-1">Observação</label>
+          <div className="flex gap-2">
+            <input 
+              type="text" 
+              value={obs} 
+              onChange={e => setObs(e.target.value)}
+              placeholder="Ex: Entrega ok"
+              className="w-full px-3 py-2 rounded-lg bg-[#1e293b] border border-[#1e3a5f] text-sm text-white focus:outline-none focus:border-blue-500"
+            />
+            <button 
+              onClick={handleSave} 
+              disabled={saving}
+              className={`px-4 py-2 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-1 min-w-[90px]
+                ${saved ? 'bg-green-600 hover:bg-green-500 text-white' : 'bg-blue-600 hover:bg-blue-500 text-white disabled:opacity-50'}
+              `}
+            >
+              {saving ? <Loader2 size={14} className="animate-spin" /> : saved ? <><Check size={14} /> Salvo</> : 'Salvar'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function FerramentasTecnicoModal({ tecnico, onClose }) {
+  const [atribuicoes, setAtribuicoes] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchAtribuicoes() {
+      if (!tecnico) return
+      setLoading(true)
+      const { data } = await supabase
+        .from('atribuicao_ferramentas')
+        .select('*, ferramentas(nome, categoria, estado, identificador)')
+        .eq('tecnico_id', tecnico.id)
+        .order('data_atribuicao', { ascending: false })
+      
+      setAtribuicoes(data || [])
+      setLoading(false)
+    }
+    fetchAtribuicoes()
+  }, [tecnico])
+
+  if (!tecnico) return null
+
+  return (
+    <Modal isOpen={!!tecnico} onClose={onClose} title={`Ferramentas - ${tecnico.nome}`}>
+      {loading ? (
+        <div className="p-8 text-center text-slate-500 flex justify-center gap-2"><Loader2 className="animate-spin" /> Carregando...</div>
+      ) : atribuicoes.length === 0 ? (
+        <div className="p-8 text-center text-slate-400">Nenhuma ferramenta atribuída a este técnico.</div>
+      ) : (
+        <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+          {atribuicoes.map(a => (
+            <EditableAtribuicao key={a.id} a={a} />
+          ))}
+        </div>
+      )}
+      <div className="flex justify-end pt-4 mt-6 border-t border-[#1e3a5f]">
+        <button onClick={onClose} className="px-5 py-2.5 rounded-xl bg-slate-800 text-slate-300 font-semibold hover:bg-slate-700">Fechar</button>
+      </div>
+    </Modal>
+  )
+}
 
 export function TecnicosAdmin() {
   const [tecnicos, setTecnicos] = useState([])
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
+  const [ferramentasModalTecnico, setFerramentasModalTecnico] = useState(null)
   
   const [editId, setEditId] = useState(null)
   const [nome, setNome] = useState('')
@@ -79,12 +239,12 @@ export function TecnicosAdmin() {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="text-2xl font-black text-white">Técnicos</h1>
           <p className="text-sm text-slate-500 mt-1">Gerencie a equipe de campo e projetos</p>
         </div>
-        <button onClick={openNew} className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold transition-all shadow-lg shadow-blue-600/20">
+        <button onClick={openNew} className="w-full md:w-auto flex justify-center items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold transition-all shadow-lg shadow-blue-600/20">
           <Plus size={18} /> Novo Técnico
         </button>
       </div>
@@ -114,6 +274,9 @@ export function TecnicosAdmin() {
                 tdClassName: 'text-right space-x-2',
                 render: (t) => (
                   <>
+                    <button onClick={() => setFerramentasModalTecnico(t)} className="p-2 text-slate-400 hover:text-green-400 transition-colors bg-[#0f172a] rounded-lg border border-[#1e3a5f]/50 hover:border-green-500/30" title="Ver Ferramentas">
+                      <PenTool size={16} />
+                    </button>
                     <button onClick={() => openEdit(t)} className="p-2 text-slate-400 hover:text-blue-400 transition-colors bg-[#0f172a] rounded-lg border border-[#1e3a5f]/50 hover:border-blue-500/30" title="Editar">
                       <Pencil size={16} />
                     </button>
@@ -177,6 +340,11 @@ export function TecnicosAdmin() {
           </div>
         </form>
       </Modal>
+
+      <FerramentasTecnicoModal 
+        tecnico={ferramentasModalTecnico} 
+        onClose={() => setFerramentasModalTecnico(null)} 
+      />
     </div>
   )
 }

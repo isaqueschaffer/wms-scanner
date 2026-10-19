@@ -164,7 +164,7 @@ export function DataTable({
 
       {/* Tabela */}
       <div className="bg-[#111827] border border-[#1e3a5f] rounded-2xl overflow-x-auto shadow-2xl">
-        <table className="w-full text-left border-collapse">
+        <table className="w-full text-left border-collapse whitespace-nowrap">
           <thead>
             <tr className="bg-[#0f172a] border-b border-[#1e3a5f]">
               {onDeleteMany && (

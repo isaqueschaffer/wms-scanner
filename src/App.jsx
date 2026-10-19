@@ -19,6 +19,8 @@ import { ProjetoKanban } from './pages/admin/ProjetoKanban'
 import { ReunioesAdmin } from './pages/admin/ReunioesAdmin'
 import { AlocacaoEquipamentosAdmin } from './pages/admin/AlocacaoEquipamentosAdmin'
 import { FerramentasAdmin } from './pages/admin/FerramentasAdmin'
+import { AtribuicaoFerramentasAdmin } from './pages/admin/AtribuicaoFerramentasAdmin'
+import { TiposFerramentasAdmin } from './pages/admin/TiposFerramentasAdmin'
 
 function ScannerApp() {
   const [session, setSession] = useState(null)
@@ -46,9 +48,11 @@ export default function App() {
             <Route path="kanban" element={<ProjetoKanban />} />
             <Route path="reunioes" element={<ReunioesAdmin />} />
             <Route path="tecnicos" element={<TecnicosAdmin />} />
+            <Route path="tipos-ferramentas" element={<TiposFerramentasAdmin />} />
             <Route path="produtos" element={<ProdutosAdmin />} />
             <Route path="alocacoes" element={<AlocacaoEquipamentosAdmin />} />
             <Route path="ferramentas" element={<FerramentasAdmin />} />
+            <Route path="atribuicao-ferramentas" element={<AtribuicaoFerramentasAdmin />} />
             <Route path="auditoria" element={<AuditoriaAdmin />} />
           </Route>
         </Routes>
