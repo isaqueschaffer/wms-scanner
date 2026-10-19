@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useAudio } from '../../hooks/useAudio'
 import { useToast } from '../../hooks/useToast'
@@ -7,11 +7,27 @@ import { ProductModal } from './ProductModal'
 import * as XLSX from 'xlsx'
 import {
   Barcode, Hash, Package, Lock, Unlock, Download,
-  CheckCircle2, XCircle, RotateCcw, Loader2,
+  CheckCircle2, XCircle, RotateCcw, Loader2, Pencil, Trash2, Check, X,
 } from 'lucide-react'
 
 // ─── Constantes de fase ───────────────────────────────────────────────────────
 const PHASE = { EAN: 'ean', QTY: 'qty', SN: 'sn' }
+const HISTORY_LIMIT = 50
+
+// Mensagem de erro se o valor lido não pode ser um serial; null se estiver ok.
+function validarSn(sn, ean, eansConhecidos) {
+  if (sn === ean || eansConhecidos.has(sn)) {
+    return `"${sn}" é um EAN, não um S/N. Bipe o serial do equipamento.`
+  }
+  if (ean.length >= 8 && sn.includes(ean)) {
+    return `Leitura inválida: o código contém o EAN (${ean}).`
+  }
+  const meio = sn.length / 2
+  if (sn.length >= 8 && Number.isInteger(meio) && sn.slice(0, meio) === sn.slice(meio)) {
+    return `Leitura duplicada (código repetido): ${sn}`
+  }
+  return null
+}
 
 export function Scanner({ session, onReset }) {
   const { playSuccess, playError } = useAudio()
@@ -29,7 +45,10 @@ export function Scanner({ session, onReset }) {
   const [exporting, setExporting] = useState(false)
   const [productModal, setProductModal] = useState(null)     // ean pendente de cadastro
   const [modalLoading, setModalLoading] = useState(false)
-  const [history, setHistory] = useState([])                 // últimas SNs lidas
+  const [history, setHistory] = useState([])                 // SNs salvos: { id, sn, time }
+  const [pendingCount, setPendingCount] = useState(0)        // bipes na fila de gravação
+  const [editing, setEditing] = useState(null)               // { id, value }
+  const [editSaving, setEditSaving] = useState(false)
   const [produtosCadastrados, setProdutosCadastrados] = useState([]) // Para escolha manual
 
   // ── Buscar produtos ao montar ──────────────────────────────────────────────
@@ -41,10 +60,14 @@ export function Scanner({ session, onReset }) {
     fetchProdutos()
   }, [])
 
+  const eansConhecidos = useMemo(() => new Set(produtosCadastrados.map(p => p.ean)), [produtosCadastrados])
+
   // ── Refs para foco ─────────────────────────────────────────────────────────
   const eanRef = useRef(null)
   const qtyRef = useRef(null)
   const snRef  = useRef(null)
+  const queueRef = useRef([])
+  const workingRef = useRef(false)
 
   // ── Foco automático por fase ───────────────────────────────────────────────
   useEffect(() => {
@@ -79,13 +102,24 @@ export function Scanner({ session, onReset }) {
     setExpectedQty(0)
     setReadCount(0)
     setHistory([])
+    setEditing(null)
+    queueRef.current = []
+    setPendingCount(0)
     setProductModal(null)
   }
 
   // ── EAN — leitura ──────────────────────────────────────────────────────────
-  async function handleEanEnter() {
-    const ean = eanValue.trim()
+  async function handleEanEnter(rawValue) {
+    const ean = (rawValue ?? eanValue).trim()
     if (!ean || processing) return
+
+    // Produtos já estão em memória: evita ida ao banco
+    const local = produtosCadastrados.find(p => p.ean === ean)
+    if (local) {
+      lockProduct(local)
+      return
+    }
+
     setProcessing(true)
 
     const { data, error } = await supabase
@@ -154,66 +188,126 @@ export function Scanner({ session, onReset }) {
   }
 
   // ── SN — bipagem em loop ───────────────────────────────────────────────────
-  async function handleSnEnter() {
-    const sn = snValue.trim()
-    if (!sn || processing) return
-    setProcessing(true)
+  // O input é limpo na hora do Enter e a gravação roda numa fila: um bipe feito
+  // enquanto o anterior ainda grava não se concatena com ele.
+  function handleSnEnter(rawValue) {
+    const sn = (rawValue ?? snValue).trim()
+    setSnValue('')
+    if (!sn) return
 
-    // Verifica duplicata no projeto
-    const { data: existing } = await supabase
-      .from('equipamentos')
-      .select('id')
-      .eq('projeto_id', session.projetoId)
-      .eq('sn', sn)
-      .maybeSingle()
-
-    if (existing) {
+    const erro = validarSn(sn, lockedProduct.ean, eansConhecidos)
+    if (erro) {
       playError()
-      addToast({ type: 'error', message: `⚠ SN DUPLICADO: ${sn}` })
-      setSnValue('')
-      setProcessing(false)
-      setTimeout(() => snRef.current?.focus(), 30)
+      addToast({ type: 'error', message: erro, duration: 4000 })
       return
     }
 
-    // Salva
-    const { error } = await supabase
-      .from('equipamentos')
-      .insert({
-        projeto_id: session.projetoId,
-        ean: lockedProduct.ean,
-        sn,
-      })
+    queueRef.current.push({ sn, ean: lockedProduct.ean, projetoId: session.projetoId })
+    setPendingCount(queueRef.current.length)
+    processQueue()
+  }
+
+  async function processQueue() {
+    if (workingRef.current) return
+    workingRef.current = true
+
+    while (queueRef.current.length > 0) {
+      const item = queueRef.current[0]
+
+      // Uma ida ao banco só: o índice único (projeto_id, sn) já barra duplicata
+      const { data, error } = await supabase
+        .from('equipamentos')
+        .insert({ projeto_id: item.projetoId, ean: item.ean, sn: item.sn })
+        .select('id')
+        .single()
+
+      queueRef.current.shift()
+      setPendingCount(queueRef.current.length)
+
+      if (error) {
+        playError()
+        addToast({ type: 'error', message: mensagemErroSn(error, item.sn), duration: 4000 })
+        continue
+      }
+
+      playSuccess()
+      setReadCount(c => c + 1)
+      setHistory(prev => [
+        { id: data.id, sn: item.sn, time: new Date().toLocaleTimeString('pt-BR') },
+        ...prev,
+      ].slice(0, HISTORY_LIMIT))
+    }
+
+    workingRef.current = false
+    setTimeout(() => snRef.current?.focus(), 30)
+  }
+
+  function mensagemErroSn(error, sn) {
+    if (error.code === '23505') return `⚠ SN DUPLICADO: ${sn}`
+    if (error.code === '23514') return `"${sn}" é um EAN, não um S/N.`
+    return `Erro ao salvar ${sn}: ${error.message}`
+  }
+
+  // ── Editar / excluir um serial já bipado ───────────────────────────────────
+  async function handleEditSave() {
+    if (!editing || editSaving) return
+    const novo = editing.value.trim()
+    const atual = history.find(h => h.id === editing.id)
+    if (!novo || novo === atual?.sn) {
+      setEditing(null)
+      return
+    }
+
+    const erro = validarSn(novo, lockedProduct.ean, eansConhecidos)
+    if (erro) {
+      addToast({ type: 'error', message: erro, duration: 4000 })
+      return
+    }
+
+    setEditSaving(true)
+    const { error } = await supabase.from('equipamentos').update({ sn: novo }).eq('id', editing.id)
+    setEditSaving(false)
 
     if (error) {
       playError()
-      addToast({ type: 'error', message: `Erro ao salvar: ${error.message}` })
-      setSnValue('')
-      setProcessing(false)
-      setTimeout(() => snRef.current?.focus(), 30)
+      addToast({ type: 'error', message: mensagemErroSn(error, novo), duration: 4000 })
       return
     }
 
-    // Sucesso
-    playSuccess()
-    const newCount = readCount + 1
-    setReadCount(newCount)
-    setHistory(prev => [{ sn, time: new Date().toLocaleTimeString('pt-BR') }, ...prev].slice(0, 8))
-    setSnValue('')
-    setProcessing(false)
+    setHistory(prev => prev.map(h => h.id === editing.id ? { ...h, sn: novo } : h))
+    setEditing(null)
+    addToast({ type: 'success', message: `S/N corrigido: ${novo}` })
     setTimeout(() => snRef.current?.focus(), 30)
-
-    // Atingiu quantidade esperada
-    if (expectedQty > 0 && newCount >= expectedQty) {
-      addToast({ type: 'success', message: `✅ Caixa completa! ${newCount}/${expectedQty} bipados.`, duration: 4000 })
-    }
   }
 
+  async function handleDeleteSn(item) {
+    if (!window.confirm(`Excluir o S/N ${item.sn}?`)) return
+    const { error } = await supabase.from('equipamentos').delete().eq('id', item.id)
+    if (error) {
+      addToast({ type: 'error', message: `Erro ao excluir: ${error.message}` })
+      return
+    }
+    setHistory(prev => prev.filter(h => h.id !== item.id))
+    setReadCount(c => Math.max(0, c - 1))
+    if (editing?.id === item.id) setEditing(null)
+    addToast({ type: 'success', message: `S/N excluído: ${item.sn}` })
+    setTimeout(() => snRef.current?.focus(), 30)
+  }
+
+  // Aviso quando a caixa atinge a quantidade esperada
+  useEffect(() => {
+    if (expectedQty > 0 && readCount === expectedQty) {
+      addToast({ type: 'success', message: `✅ Caixa completa! ${readCount}/${expectedQty} bipados.`, duration: 4000 })
+    }
+  }, [readCount, expectedQty, addToast])
+
   // ── Enter handler genérico ─────────────────────────────────────────────────
+  // Repassa o valor real do input (e não o state) para não perder caracteres
+  // de um leitor que digita mais rápido que o React renderiza.
   function handleKeyDown(e, handler) {
     if (e.key === 'Enter') {
       e.preventDefault()
-      handler()
+      handler(e.currentTarget.value)
     }
   }
 
@@ -406,7 +500,7 @@ export function Scanner({ session, onReset }) {
                 min="1"
                 value={qtyValue}
                 onChange={e => setQtyValue(e.target.value)}
-                onKeyDown={e => handleKeyDown(e, handleQtyEnter)}
+                onKeyDown={e => handleKeyDown(e, () => handleQtyEnter())}
                 placeholder="0"
                 className="
                   w-full px-5 py-5 rounded-xl bg-[#0f172a] border-2 border-yellow-500/50
@@ -427,9 +521,9 @@ export function Scanner({ session, onReset }) {
                   <Hash size={16} className="text-green-400" />
                   <p className="text-sm font-bold text-slate-300 uppercase tracking-widest">Serial Number</p>
                 </div>
-                {processing && (
+                {pendingCount > 0 && (
                   <div className="flex items-center gap-1 text-slate-500 text-xs">
-                    <Loader2 size={12} className="animate-spin" /> verificando...
+                    <Loader2 size={12} className="animate-spin" /> gravando{pendingCount > 1 ? ` (${pendingCount})` : ''}...
                   </div>
                 )}
               </div>
@@ -494,15 +588,51 @@ export function Scanner({ session, onReset }) {
             </div>
           )}
 
-          {/* Histórico */}
-          {history.length > 1 && (
+          {/* Seriais bipados (editáveis) */}
+          {history.length > 0 && (
             <div className="bg-[#111827] border border-[#1e3a5f] rounded-2xl p-4 flex-1">
-              <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">Histórico Recente</p>
-              <ul className="space-y-2">
-                {history.slice(1).map((h, i) => (
-                  <li key={i} className="flex items-center justify-between gap-2 py-1.5 border-b border-slate-800 last:border-0">
-                    <span className="font-mono text-slate-400 text-xs break-all">{h.sn}</span>
-                    <span className="text-slate-600 text-xs shrink-0">{h.time}</span>
+              <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">
+                Seriais Bipados ({history.length})
+              </p>
+              <ul className="space-y-1 max-h-[50vh] overflow-y-auto">
+                {history.map(h => (
+                  <li key={h.id} className="flex items-center justify-between gap-2 py-1.5 border-b border-slate-800 last:border-0">
+                    {editing?.id === h.id ? (
+                      <>
+                        <input
+                          autoFocus
+                          value={editing.value}
+                          onChange={e => setEditing({ id: h.id, value: e.target.value })}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') { e.preventDefault(); handleEditSave() }
+                            if (e.key === 'Escape') setEditing(null)
+                          }}
+                          disabled={editSaving}
+                          className="flex-1 min-w-0 bg-[#0f172a] border border-blue-500 rounded px-2 py-1 text-xs font-mono text-white focus:outline-none"
+                        />
+                        <button onClick={handleEditSave} disabled={editSaving} title="Salvar" className="p-1 text-emerald-400 hover:text-emerald-300">
+                          {editSaving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                        </button>
+                        <button onClick={() => setEditing(null)} title="Cancelar" className="p-1 text-slate-500 hover:text-white">
+                          <X size={14} />
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <div className="min-w-0">
+                          <span className="font-mono text-slate-300 text-xs break-all">{h.sn}</span>
+                          <span className="text-slate-600 text-xs ml-2">{h.time}</span>
+                        </div>
+                        <div className="flex items-center shrink-0">
+                          <button onClick={() => setEditing({ id: h.id, value: h.sn })} title="Editar S/N" className="p-1 text-slate-500 hover:text-blue-400">
+                            <Pencil size={14} />
+                          </button>
+                          <button onClick={() => handleDeleteSn(h)} title="Excluir S/N" className="p-1 text-slate-500 hover:text-red-400">
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </>
+                    )}
                   </li>
                 ))}
               </ul>

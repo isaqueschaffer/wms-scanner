@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
-import { Loader2, ArrowLeft, Trash2, UserCheck, X, FileText } from 'lucide-react'
+import { Loader2, ArrowLeft, Trash2, UserCheck, X, FileText, Plus, Pencil } from 'lucide-react'
 import { DataTable } from '../../components/ui/DataTable'
 import { Modal } from '../../components/ui/Modal'
 
@@ -62,6 +62,85 @@ function EditablePatrimonio({ eq, onUpdate }) {
   )
 }
 
+function EquipamentoFormModal({ isOpen, onClose, projetoId, equipamento, produtos, onSaved }) {
+  const [ean, setEan] = useState('')
+  const [sn, setSn] = useState('')
+  const [patrimonio, setPatrimonio] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [erro, setErro] = useState('')
+
+  useEffect(() => {
+    if (!isOpen) return
+    setEan(equipamento?.ean || '')
+    setSn(equipamento?.sn || '')
+    setPatrimonio(equipamento?.n_patrimonio || '')
+    setErro('')
+  }, [isOpen, equipamento])
+
+  async function handleSubmit(e) {
+    e.preventDefault()
+    const snLimpo = sn.trim()
+    if (!ean || !snLimpo) {
+      setErro('Selecione o produto e informe o S/N.')
+      return
+    }
+
+    setSaving(true)
+    setErro('')
+    const payload = { ean, sn: snLimpo, n_patrimonio: patrimonio.trim() || null }
+    const { error } = equipamento
+      ? await supabase.from('equipamentos').update(payload).eq('id', equipamento.id)
+      : await supabase.from('equipamentos').insert({ ...payload, projeto_id: projetoId })
+    setSaving(false)
+
+    if (error) {
+      setErro(error.code === '23505' ? `O S/N "${snLimpo}" já existe neste projeto.` : error.message)
+      return
+    }
+    onSaved()
+    onClose()
+  }
+
+  const inputClass = 'w-full bg-[#0f172a] border border-[#1e3a5f] rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-blue-500'
+  const labelClass = 'block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5'
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title={equipamento ? 'Editar equipamento' : 'Adicionar equipamento'}>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className={labelClass}>Produto</label>
+          <select value={ean} onChange={e => setEan(e.target.value)} className={inputClass}>
+            <option value="">Selecione...</option>
+            {produtos.map(p => (
+              <option key={p.ean} value={p.ean}>{p.nome} ({p.ean})</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className={labelClass}>S/N</label>
+          <input value={sn} onChange={e => setSn(e.target.value)} className={`${inputClass} font-mono`} placeholder="Número de série" />
+        </div>
+        <div>
+          <label className={labelClass}>Nº Patrimônio (opcional)</label>
+          <input value={patrimonio} onChange={e => setPatrimonio(e.target.value)} className={`${inputClass} font-mono`} placeholder="Nº..." />
+        </div>
+
+        {erro && <p className="text-sm text-red-400">{erro}</p>}
+
+        <div className="flex justify-end gap-3 pt-2">
+          <button type="button" onClick={onClose} className="px-5 py-2.5 rounded-xl bg-slate-800 text-slate-300 font-semibold hover:bg-slate-700">
+            Cancelar
+          </button>
+          <button type="submit" disabled={saving} className="px-5 py-2.5 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-500 disabled:opacity-60 flex items-center gap-2">
+            {saving && <Loader2 size={16} className="animate-spin" />}
+            {equipamento ? 'Salvar' : 'Adicionar'}
+          </button>
+        </div>
+      </form>
+    </Modal>
+  )
+}
+
 export function EquipamentosProjetoAdmin() {
   const { id } = useParams() // ID do projeto
   const [projeto, setProjeto] = useState(null)
@@ -69,6 +148,8 @@ export function EquipamentosProjetoAdmin() {
   const [loading, setLoading] = useState(true)
   const [alocacaoModal, setAlocacaoModal] = useState(null)
   const [reportModalOpen, setReportModalOpen] = useState(false)
+  const [produtos, setProdutos] = useState([])
+  const [formModal, setFormModal] = useState({ open: false, equipamento: null })
 
   // Função para agrupar equipamentos pelo nome do produto
   const agrupamentoRelatorio = equipamentos.reduce((acc, eq) => {
@@ -127,6 +208,12 @@ export function EquipamentosProjetoAdmin() {
     fetchDados()
   }, [id])
 
+  useEffect(() => {
+    supabase.from('produtos').select('ean, nome').order('nome').then(({ data }) => {
+      if (data) setProdutos(data)
+    })
+  }, [])
+
   async function handleDelete(idEquip) {
     if (!window.confirm('Excluir este equipamento? Ele não contará mais neste projeto.')) return
     await supabase.from('equipamentos').delete().eq('id', idEquip)
@@ -159,6 +246,12 @@ export function EquipamentosProjetoAdmin() {
             Cliente: {projeto?.clientes?.nome || '...'}
           </p>
         </div>
+        <button
+          onClick={() => setFormModal({ open: true, equipamento: null })}
+          className="w-full md:w-auto flex justify-center items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold transition-all shadow-lg shadow-emerald-600/20"
+        >
+          <Plus size={18} /> Adicionar Equipamento
+        </button>
         <button 
           onClick={() => setReportModalOpen(true)}
           className="w-full md:w-auto flex justify-center items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold transition-all shadow-lg shadow-blue-600/20"
@@ -207,6 +300,13 @@ export function EquipamentosProjetoAdmin() {
                         <UserCheck size={16} />
                       </button>
                     )}
+                    <button
+                      onClick={() => setFormModal({ open: true, equipamento: eq })}
+                      className="p-2 text-slate-500 hover:text-blue-400 transition-colors bg-[#0f172a] rounded-lg border border-[#1e3a5f]/50 hover:border-blue-500/30"
+                      title="Editar equipamento"
+                    >
+                      <Pencil size={16} />
+                    </button>
                     <button 
                       onClick={() => handleDelete(eq.id)} 
                       className="p-2 text-slate-500 hover:text-red-400 transition-colors bg-[#0f172a] rounded-lg border border-[#1e3a5f]/50 hover:border-red-500/30"
@@ -221,6 +321,15 @@ export function EquipamentosProjetoAdmin() {
           />
         )}
       </div>
+
+      <EquipamentoFormModal
+        isOpen={formModal.open}
+        onClose={() => setFormModal({ open: false, equipamento: null })}
+        projetoId={id}
+        equipamento={formModal.equipamento}
+        produtos={produtos}
+        onSaved={fetchDados}
+      />
 
       {/* Modal Histórico de Alocação */}
       {alocacaoModal && (
