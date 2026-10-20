@@ -29,6 +29,29 @@ function validarSn(sn, ean, eansConhecidos) {
   return null
 }
 
+// ─── Padrão de S/N ────────────────────────────────────────────────────────────
+// Forma do serial: sequência de grupos [classe, tamanho]. Dígitos = 'D',
+// letras = 'L' (maiúsc./minúsc. contam igual), qualquer outro caractere é literal.
+function formaSn(sn) {
+  const grupos = []
+  for (const ch of sn) {
+    const classe = /\d/.test(ch) ? 'D' : /\p{L}/u.test(ch) ? 'L' : ch
+    const ultimo = grupos[grupos.length - 1]
+    if (ultimo && ultimo[0] === classe) ultimo[1]++
+    else grupos.push([classe, 1])
+  }
+  return grupos.map(([c, n]) => `${c}${n}`).join('|')
+}
+
+function descreverForma(forma) {
+  return forma.split('|').map(g => {
+    const n = g.slice(1)
+    if (g[0] === 'D') return `${n} ${n === '1' ? 'número' : 'números'}`
+    if (g[0] === 'L') return `${n} ${n === '1' ? 'letra' : 'letras'}`
+    return `"${g[0]}" x${n}`
+  }).join(' + ')
+}
+
 export function Scanner({ session, onReset }) {
   const { playSuccess, playError } = useAudio()
   const { toasts, addToast } = useToast()
@@ -67,6 +90,9 @@ export function Scanner({ session, onReset }) {
   const qtyRef = useRef(null)
   const snRef  = useRef(null)
   const queueRef = useRef([])
+  // Aprendizado do padrão: recentes = últimas formas aceitas; padrao = forma fixada
+  const aprendizadoRef = useRef({ recentes: [], padrao: null })
+  const [padrao, setPadrao] = useState(null)
   const workingRef = useRef(false)
 
   // ── Foco automático por fase ───────────────────────────────────────────────
@@ -106,6 +132,32 @@ export function Scanner({ session, onReset }) {
     queueRef.current = []
     setPendingCount(0)
     setProductModal(null)
+    resetarPadrao()
+  }
+
+  function resetarPadrao() {
+    aprendizadoRef.current = { recentes: [], padrao: null }
+    setPadrao(null)
+  }
+
+  // Confere o S/N com o padrão do produto (se já aprendido) e, se `aprender`,
+  // registra a forma: o padrão é fixado quando 2 bipes seguidos têm a mesma forma.
+  function checarPadrao(sn, aprender) {
+    const ap = aprendizadoRef.current
+    const forma = formaSn(sn)
+    if (ap.padrao) {
+      return forma === ap.padrao
+        ? null
+        : `"${sn}" não segue o padrão deste produto (${descreverForma(ap.padrao)}). Confira a leitura.`
+    }
+    if (aprender) {
+      ap.recentes = [...ap.recentes, forma].slice(-2)
+      if (ap.recentes.length === 2 && ap.recentes[0] === ap.recentes[1]) {
+        ap.padrao = forma
+        setPadrao(forma)
+      }
+    }
+    return null
   }
 
   // ── EAN — leitura ──────────────────────────────────────────────────────────
@@ -150,6 +202,7 @@ export function Scanner({ session, onReset }) {
     setLockedProduct(product)
     setReadCount(0)
     setHistory([])
+    resetarPadrao()
     setPhase(PHASE.QTY)
   }
 
@@ -195,12 +248,13 @@ export function Scanner({ session, onReset }) {
     setSnValue('')
     if (!sn) return
 
-    const erro = validarSn(sn, lockedProduct.ean, eansConhecidos)
+    const erro = validarSn(sn, lockedProduct.ean, eansConhecidos) ?? checarPadrao(sn, false)
     if (erro) {
       playError()
       addToast({ type: 'error', message: erro, duration: 4000 })
       return
     }
+    checarPadrao(sn, true)
 
     queueRef.current.push({ sn, ean: lockedProduct.ean, projetoId: session.projetoId })
     setPendingCount(queueRef.current.length)
@@ -258,7 +312,7 @@ export function Scanner({ session, onReset }) {
       return
     }
 
-    const erro = validarSn(novo, lockedProduct.ean, eansConhecidos)
+    const erro = validarSn(novo, lockedProduct.ean, eansConhecidos) ?? checarPadrao(novo, false)
     if (erro) {
       addToast({ type: 'error', message: erro, duration: 4000 })
       return
@@ -521,6 +575,18 @@ export function Scanner({ session, onReset }) {
                   <Hash size={16} className="text-green-400" />
                   <p className="text-sm font-bold text-slate-300 uppercase tracking-widest">Serial Number</p>
                 </div>
+                {padrao ? (
+                  <button
+                    type="button"
+                    onClick={resetarPadrao}
+                    title="Clique para redefinir o padrão (será reaprendido nos próximos 2 bipes)"
+                    className="text-xs text-green-400 hover:text-green-300 underline decoration-dotted"
+                  >
+                    Padrão: {descreverForma(padrao)}
+                  </button>
+                ) : (
+                  <span className="text-xs text-slate-600">Aprendendo padrão...</span>
+                )}
                 {pendingCount > 0 && (
                   <div className="flex items-center gap-1 text-slate-500 text-xs">
                     <Loader2 size={12} className="animate-spin" /> gravando{pendingCount > 1 ? ` (${pendingCount})` : ''}...
