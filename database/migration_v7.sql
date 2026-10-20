@@ -110,8 +110,9 @@ begin
     when 'projetos' then 'projeto'
   end;
 
+  -- Lê o id via jsonb: "new.ean" quebra em tabelas sem a coluna ean
   if tg_op = 'DELETE' then
-    v_id := case when tg_table_name = 'produtos' then old.ean else old.id::text end;
+    v_id := to_jsonb(old) ->> case when tg_table_name = 'produtos' then 'ean' else 'id' end;
     v_op := 'delete';
   else
     -- Atualização feita pelo próprio worker (só campos omie_*) não reenfileira
@@ -120,7 +121,7 @@ begin
          = (to_jsonb(old) - 'omie_codigo' - 'omie_sincronizado_em') then
       return new;
     end if;
-    v_id := case when tg_table_name = 'produtos' then new.ean else new.id::text end;
+    v_id := to_jsonb(new) ->> case when tg_table_name = 'produtos' then 'ean' else 'id' end;
     v_op := 'upsert';
   end if;
 
