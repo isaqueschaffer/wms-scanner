@@ -4,6 +4,9 @@ import { Modal } from '../../components/ui/Modal'
 import { DataTable } from '../../components/ui/DataTable'
 import { Pencil, Trash2, Plus, Loader2 } from 'lucide-react'
 
+const UNIDADES = ['UN', 'PC', 'CX', 'KIT', 'M', 'RL', 'KG']
+const inputClass = 'w-full px-4 py-3 rounded-xl bg-[#0f172a] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30'
+
 export function ProdutosAdmin() {
   const [produtos, setProdutos] = useState([])
   const [loading, setLoading] = useState(true)
@@ -12,6 +15,9 @@ export function ProdutosAdmin() {
   const [editEan, setEditEan] = useState(null)
   const [ean, setEan] = useState('')
   const [nome, setNome] = useState('')
+  const [codigo, setCodigo] = useState('')
+  const [unidade, setUnidade] = useState('UN')
+  const [ncm, setNcm] = useState('')
   const [saving, setSaving] = useState(false)
 
   async function fetchProdutos() {
@@ -29,6 +35,9 @@ export function ProdutosAdmin() {
     setEditEan(null)
     setEan('')
     setNome('')
+    setCodigo('')
+    setUnidade('UN')
+    setNcm('')
     setModalOpen(true)
   }
 
@@ -36,22 +45,47 @@ export function ProdutosAdmin() {
     setEditEan(p.ean)
     setEan(p.ean)
     setNome(p.nome)
+    setCodigo(p.codigo || '')
+    setUnidade(p.unidade || 'UN')
+    setNcm(p.ncm || '')
     setModalOpen(true)
   }
 
   async function handleSave(e) {
     e.preventDefault()
     if (!ean.trim() || !nome.trim()) return
-    setSaving(true)
 
-    if (editEan) {
-      // Nota: Mudar PK (ean) não é trivial. Aqui assumimos que só editamos o nome.
-      await supabase.from('produtos').update({ nome: nome.trim() }).eq('ean', editEan)
-    } else {
-      await supabase.from('produtos').insert({ ean: ean.trim(), nome: nome.trim() })
+    const ncmLimpo = ncm.replace(/\D/g, '')
+    if (ncmLimpo && ncmLimpo.length !== 8) {
+      alert('NCM inválido: deve ter 8 dígitos.')
+      return
     }
 
+    const dados = {
+      nome: nome.trim(),
+      codigo: codigo.trim() || null,
+      unidade,
+      ncm: ncmLimpo || null,
+    }
+
+    setSaving(true)
+    // Nota: Mudar PK (ean) não é trivial. Na edição o EAN fica fixo.
+    const { error } = editEan
+      ? await supabase.from('produtos').update(dados).eq('ean', editEan)
+      : await supabase.from('produtos').insert({ ean: ean.trim(), ...dados })
     setSaving(false)
+
+    if (error) {
+      if (error.code === '23505') {
+        alert(editEan || !error.message.includes('pkey')
+          ? 'Já existe um produto com este código interno.'
+          : 'Já existe um produto com este EAN.')
+      } else {
+        alert(`Erro ao salvar: ${error.message}`)
+      }
+      return
+    }
+
     setModalOpen(false)
     fetchProdutos()
   }
@@ -86,13 +120,23 @@ export function ProdutosAdmin() {
         ) : (
           <DataTable
             data={produtos}
-            searchKeys={['ean', 'nome']}
+            searchKeys={['ean', 'nome', 'codigo']}
             idKey="ean"
             onDeleteMany={handleDeleteMany}
             emptyMessage="Nenhum produto encontrado."
             columns={[
               { key: 'ean', label: 'EAN (Código)', tdClassName: 'font-mono text-sm text-blue-400' },
               { key: 'nome', label: 'Nome do Produto', render: (p) => <span className="font-semibold text-white">{p.nome}</span> },
+              { key: 'codigo', label: 'Código', render: (p) => <span className="font-mono text-sm text-slate-300">{p.codigo || '—'}</span> },
+              { key: 'unidade', label: 'Un.', tdClassName: 'text-sm text-slate-400' },
+              { key: 'ncm', label: 'NCM', render: (p) => <span className="font-mono text-sm text-slate-400">{p.ncm || '—'}</span> },
+              {
+                key: 'omie_codigo',
+                label: 'Omie',
+                render: (p) => p.omie_codigo
+                  ? <span className="text-xs font-bold text-emerald-400">#{p.omie_codigo}</span>
+                  : <span className="text-xs text-slate-600">não sincronizado</span>,
+              },
               {
                 key: 'actions',
                 label: 'Ações',
@@ -135,6 +179,22 @@ export function ProdutosAdmin() {
               onChange={e => setNome(e.target.value)}
               className="w-full px-4 py-3 rounded-xl bg-[#0f172a] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30"
             />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-[1fr_7rem_9rem] gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-slate-300 mb-2">Código interno (SKU)</label>
+              <input type="text" value={codigo} onChange={e => setCodigo(e.target.value)} className={`${inputClass} font-mono`} />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-slate-300 mb-2">Unidade</label>
+              <select value={unidade} onChange={e => setUnidade(e.target.value)} className={inputClass}>
+                {UNIDADES.map(u => <option key={u} value={u}>{u}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-slate-300 mb-2">NCM</label>
+              <input type="text" inputMode="numeric" maxLength={10} value={ncm} onChange={e => setNcm(e.target.value)} className={`${inputClass} font-mono`} placeholder="8 dígitos" />
+            </div>
           </div>
           <div className="flex justify-end gap-3 pt-4">
             <button type="button" onClick={() => setModalOpen(false)} className="px-5 py-2.5 rounded-xl bg-slate-800 text-slate-300 font-semibold hover:bg-slate-700">Cancelar</button>

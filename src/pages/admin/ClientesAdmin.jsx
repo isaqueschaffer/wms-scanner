@@ -4,6 +4,16 @@ import { Modal } from '../../components/ui/Modal'
 import { DataTable } from '../../components/ui/DataTable'
 import { Pencil, Trash2, Plus, Loader2 } from 'lucide-react'
 
+const FORM_VAZIO = { nome: '', razao_social: '', cnpj_cpf: '', email: '', cidade: '', estado: '' }
+const inputClass = 'w-full px-4 py-3 rounded-xl bg-[#0f172a] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30'
+
+function formatarCnpjCpf(v) {
+  const d = (v || '').replace(/\D/g, '')
+  if (d.length === 11) return d.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')
+  if (d.length === 14) return d.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5')
+  return v || ''
+}
+
 export function ClientesAdmin() {
   const [clientes, setClientes] = useState([])
   const [loading, setLoading] = useState(true)
@@ -11,7 +21,7 @@ export function ClientesAdmin() {
   
   // Estado do formulário
   const [editId, setEditId] = useState(null)
-  const [nome, setNome] = useState('')
+  const [form, setForm] = useState(FORM_VAZIO)
   const [saving, setSaving] = useState(false)
 
   async function fetchClientes() {
@@ -27,27 +37,49 @@ export function ClientesAdmin() {
 
   function openNew() {
     setEditId(null)
-    setNome('')
+    setForm(FORM_VAZIO)
     setModalOpen(true)
   }
 
   function openEdit(c) {
     setEditId(c.id)
-    setNome(c.nome)
+    setForm({
+      nome: c.nome || '',
+      razao_social: c.razao_social || '',
+      cnpj_cpf: formatarCnpjCpf(c.cnpj_cpf),
+      email: c.email || '',
+      cidade: c.cidade || '',
+      estado: c.estado || '',
+    })
     setModalOpen(true)
   }
 
   async function handleSave(e) {
     e.preventDefault()
-    if (!nome.trim()) return
-    setSaving(true)
+    if (!form.nome.trim()) return
 
+    const cnpjCpf = form.cnpj_cpf.replace(/\D/g, '')
+    if (cnpjCpf && cnpjCpf.length !== 11 && cnpjCpf.length !== 14) {
+      alert('CNPJ/CPF inválido: deve ter 11 (CPF) ou 14 (CNPJ) dígitos.')
+      return
+    }
+
+    const payload = {
+      nome: form.nome.trim(),
+      razao_social: form.razao_social.trim() || null,
+      cnpj_cpf: cnpjCpf || null,
+      email: form.email.trim() || null,
+      cidade: form.cidade.trim() || null,
+      estado: form.estado.trim().toUpperCase() || null,
+    }
+
+    setSaving(true)
     let error;
     if (editId) {
-      const { error: err } = await supabase.from('clientes').update({ nome: nome.trim() }).eq('id', editId)
+      const { error: err } = await supabase.from('clientes').update(payload).eq('id', editId)
       error = err
     } else {
-      const { error: err } = await supabase.from('clientes').insert({ nome: nome.trim() })
+      const { error: err } = await supabase.from('clientes').insert(payload)
       error = err
     }
 
@@ -55,6 +87,10 @@ export function ClientesAdmin() {
     
     if (error) {
       console.error('Erro no Supabase:', error)
+      if (error.code === '23505') {
+        alert('Já existe um cliente com este CNPJ/CPF.')
+        return
+      }
       alert(`Erro ao salvar no banco: ${error.message}\nVerifique as políticas RLS no Supabase.`)
       return
     }
@@ -97,11 +133,28 @@ export function ClientesAdmin() {
         ) : (
           <DataTable
             data={clientes}
-            searchKeys={['nome']}
+            searchKeys={['nome', 'razao_social', 'cnpj_cpf']}
             onDeleteMany={handleDeleteMany}
             emptyMessage="Nenhum cliente encontrado."
             columns={[
-              { key: 'nome', label: 'Nome do Cliente', render: (c) => <span className="font-semibold text-white">{c.nome}</span> },
+              {
+                key: 'nome',
+                label: 'Nome do Cliente',
+                render: (c) => (
+                  <div>
+                    <span className="font-semibold text-white">{c.nome}</span>
+                    {c.razao_social && <p className="text-xs text-slate-500">{c.razao_social}</p>}
+                  </div>
+                ),
+              },
+              { key: 'cnpj_cpf', label: 'CNPJ/CPF', render: (c) => <span className="font-mono text-sm text-slate-300">{formatarCnpjCpf(c.cnpj_cpf) || '—'}</span> },
+              {
+                key: 'omie_codigo',
+                label: 'Omie',
+                render: (c) => c.omie_codigo
+                  ? <span className="text-xs font-bold text-emerald-400">#{c.omie_codigo}</span>
+                  : <span className="text-xs text-slate-600">não sincronizado</span>,
+              },
               { 
                 key: 'actions', 
                 label: 'Ações', 
@@ -125,19 +178,43 @@ export function ClientesAdmin() {
       <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={editId ? 'Editar Cliente' : 'Novo Cliente'}>
         <form onSubmit={handleSave} className="space-y-4">
           <div>
-            <label className="block text-sm font-semibold text-slate-300 mb-2">Nome</label>
+            <label className="block text-sm font-semibold text-slate-300 mb-2">Nome fantasia</label>
             <input
               autoFocus
               type="text"
-              value={nome}
-              onChange={e => setNome(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-[#0f172a] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30"
+              value={form.nome}
+              onChange={e => setForm(f => ({ ...f, nome: e.target.value }))}
+              className={inputClass}
               placeholder="Ex: Trilan"
             />
           </div>
+          <div>
+            <label className="block text-sm font-semibold text-slate-300 mb-2">Razão social</label>
+            <input type="text" value={form.razao_social} onChange={e => setForm(f => ({ ...f, razao_social: e.target.value }))} className={inputClass} />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-slate-300 mb-2">CNPJ/CPF</label>
+              <input type="text" inputMode="numeric" value={form.cnpj_cpf} onChange={e => setForm(f => ({ ...f, cnpj_cpf: e.target.value }))} onBlur={() => setForm(f => ({ ...f, cnpj_cpf: formatarCnpjCpf(f.cnpj_cpf) }))} className={`${inputClass} font-mono`} placeholder="Só números" />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-slate-300 mb-2">E-mail</label>
+              <input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} className={inputClass} />
+            </div>
+          </div>
+          <div className="grid grid-cols-[1fr_6rem] gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-slate-300 mb-2">Cidade</label>
+              <input type="text" value={form.cidade} onChange={e => setForm(f => ({ ...f, cidade: e.target.value }))} className={inputClass} />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-slate-300 mb-2">UF</label>
+              <input type="text" maxLength={2} value={form.estado} onChange={e => setForm(f => ({ ...f, estado: e.target.value.toUpperCase() }))} className={`${inputClass} uppercase`} />
+            </div>
+          </div>
           <div className="flex justify-end gap-3 pt-4">
             <button type="button" onClick={() => setModalOpen(false)} className="px-5 py-2.5 rounded-xl bg-slate-800 text-slate-300 font-semibold hover:bg-slate-700">Cancelar</button>
-            <button type="submit" disabled={!nome.trim() || saving} className="px-5 py-2.5 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-500 disabled:opacity-50 flex items-center gap-2">
+            <button type="submit" disabled={!form.nome.trim() || saving} className="px-5 py-2.5 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-500 disabled:opacity-50 flex items-center gap-2">
               {saving ? <Loader2 size={16} className="animate-spin" /> : null} Salvar
             </button>
           </div>
