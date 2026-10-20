@@ -30,26 +30,82 @@ function validarSn(sn, ean, eansConhecidos) {
 }
 
 // ─── Padrão de S/N ────────────────────────────────────────────────────────────
-// Forma do serial: sequência de grupos [classe, tamanho]. Dígitos = 'D',
-// letras = 'L' (maiúsc./minúsc. contam igual), qualquer outro caractere é literal.
-function formaSn(sn) {
-  const grupos = []
-  for (const ch of sn) {
-    const classe = /\d/.test(ch) ? 'D' : /\p{L}/u.test(ch) ? 'L' : ch
-    const ultimo = grupos[grupos.length - 1]
-    if (ultimo && ultimo[0] === classe) ultimo[1]++
-    else grupos.push([classe, 1])
+// O padrão é inferido de 2 seriais e guarda: tamanho, máscara por posição
+// (D = número, L = letra, A = letra ou número, outro = símbolo literal),
+// prefixo em letras (ex.: "fhtt") e caixa (só minúsculas / só maiúsculas).
+const classeCh = ch => (/\d/.test(ch) ? 'D' : /\p{L}/u.test(ch) ? 'L' : ch)
+const ehAlnum = c => c === 'D' || c === 'L'
+
+function aprenderPadrao(a, b) {
+  const A = Array.from(a)
+  const B = Array.from(b)
+  if (A.length !== B.length) return null
+  const ma = A.map(classeCh)
+  const mb = B.map(classeCh)
+
+  // Seriais estruturados (poucos blocos, ex.: 5 números + 2 letras) mantêm a
+  // máscara exata; seriais com letras e números misturados (hexadecimal, MAC)
+  // só exigem "alfanumérico" em cada posição.
+  const blocos = ma.filter((c, i) => i === 0 || c !== ma[i - 1]).length
+  const iguais = ma.every((c, i) => c === mb[i])
+  let mask
+  if (iguais && blocos <= 3) {
+    mask = ma
+  } else {
+    mask = []
+    for (let i = 0; i < ma.length; i++) {
+      if (ehAlnum(ma[i]) && ehAlnum(mb[i])) mask.push('A')
+      else if (ma[i] === mb[i]) mask.push(ma[i])
+      else return null
+    }
   }
-  return grupos.map(([c, n]) => `${c}${n}`).join('|')
+
+  let n = 0
+  while (n < A.length && A[n] === B[n] && ma[n] === 'L') n++
+  const comum = A.slice(0, n).join('')
+  const prefixo = n >= 3 && /\p{L}/u.test(comum) ? comum : ''
+
+  const letras = [...A, ...B].filter(ch => classeCh(ch) === 'L').join('')
+  const caixa = !letras ? 'any'
+    : letras === letras.toLowerCase() ? 'min'
+    : letras === letras.toUpperCase() ? 'mai' : 'any'
+
+  return { len: A.length, mask, prefixo, caixa }
 }
 
-function descreverForma(forma) {
-  return forma.split('|').map(g => {
-    const n = g.slice(1)
-    if (g[0] === 'D') return `${n} ${n === '1' ? 'número' : 'números'}`
-    if (g[0] === 'L') return `${n} ${n === '1' ? 'letra' : 'letras'}`
-    return `"${g[0]}" x${n}`
-  }).join(' + ')
+// Retorna o motivo da recusa, ou null se o S/N segue o padrão.
+function motivoForaDoPadrao(sn, p) {
+  const C = Array.from(sn)
+  if (C.length !== p.len) return `deveria ter ${p.len} caracteres, tem ${C.length}`
+  for (let i = 0; i < C.length; i++) {
+    const m = p.mask[i]
+    const k = classeCh(C[i])
+    if (m === 'A' ? !ehAlnum(k) : m !== k) return `o caractere ${i + 1} ("${C[i]}") não confere`
+  }
+  if (p.prefixo && !sn.startsWith(p.prefixo)) return `deveria começar com "${p.prefixo}"`
+  const letras = C.filter(ch => classeCh(ch) === 'L').join('')
+  if (p.caixa === 'min' && letras !== letras.toLowerCase()) return 'deveria ter letras minúsculas'
+  if (p.caixa === 'mai' && letras !== letras.toUpperCase()) return 'deveria ter letras maiúsculas'
+  return null
+}
+
+function descreverPadrao(p) {
+  const grupos = []
+  for (const m of p.mask) {
+    const ult = grupos[grupos.length - 1]
+    if (ult && ult[0] === m) ult[1]++
+    else grupos.push([m, 1])
+  }
+  const nome = (m, n) => m === 'D' ? (n === 1 ? 'número' : 'números')
+    : m === 'L' ? (n === 1 ? 'letra' : 'letras')
+    : m === 'A' ? (n === 1 ? 'alfanumérico' : 'alfanuméricos')
+    : null
+  const partes = grupos.map(([m, n]) => nome(m, n) ? `${n} ${nome(m, n)}` : `"${m.repeat(n)}"`)
+  let txt = partes.join(' + ')
+  if (p.prefixo) txt += `, começa com "${p.prefixo}"`
+  if (p.caixa === 'min') txt += ', minúsculas'
+  if (p.caixa === 'mai') txt += ', maiúsculas'
+  return txt
 }
 
 export function Scanner({ session, onReset }) {
@@ -141,20 +197,23 @@ export function Scanner({ session, onReset }) {
   }
 
   // Confere o S/N com o padrão do produto (se já aprendido) e, se `aprender`,
-  // registra a forma: o padrão é fixado quando 2 bipes seguidos têm a mesma forma.
+  // registra o serial: o padrão é inferido dos 2 últimos seriais aceitos.
   function checarPadrao(sn, aprender) {
     const ap = aprendizadoRef.current
-    const forma = formaSn(sn)
     if (ap.padrao) {
-      return forma === ap.padrao
-        ? null
-        : `"${sn}" não segue o padrão deste produto (${descreverForma(ap.padrao)}). Confira a leitura.`
+      const motivo = motivoForaDoPadrao(sn, ap.padrao)
+      return motivo
+        ? `"${sn}" fora do padrão (${descreverPadrao(ap.padrao)}): ${motivo}.`
+        : null
     }
     if (aprender) {
-      ap.recentes = [...ap.recentes, forma].slice(-2)
-      if (ap.recentes.length === 2 && ap.recentes[0] === ap.recentes[1]) {
-        ap.padrao = forma
-        setPadrao(forma)
+      ap.recentes = [...ap.recentes, sn].slice(-2)
+      if (ap.recentes.length === 2) {
+        const p = aprenderPadrao(ap.recentes[0], ap.recentes[1])
+        if (p) {
+          ap.padrao = p
+          setPadrao(p)
+        }
       }
     }
     return null
@@ -582,7 +641,7 @@ export function Scanner({ session, onReset }) {
                     title="Clique para redefinir o padrão (será reaprendido nos próximos 2 bipes)"
                     className="text-xs text-green-400 hover:text-green-300 underline decoration-dotted"
                   >
-                    Padrão: {descreverForma(padrao)}
+                    Padrão: {descreverPadrao(padrao)}
                   </button>
                 ) : (
                   <span className="text-xs text-slate-600">Aprendendo padrão...</span>
