@@ -28,6 +28,10 @@
   box-sizing: border-box;
 }
 
+html {
+  color-scheme: dark;
+}
+
 html, body, #root {
   height: 100%;
   margin: 0;
@@ -80,4 +84,13 @@ body {
 .ean-locked-card {
   background: linear-gradient(90deg, #1a2236 25%, #1e3a5f 50%, #1a2236 75%);
   background-size: 400px 100%;
+}
+
+/* Respeita quem prefere menos movimento: sem pulso no input e toasts quase instantâneos
+   (spinners de carregamento continuam, pois indicam atividade) */
+@media (prefers-reduced-motion: reduce) {
+  .input-active { animation: none; }
+  .toast-enter,
+  .toast-exit { animation-duration: 0.01ms; }
+  .ean-locked-card { animation: none; }
 }

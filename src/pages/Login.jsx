@@ -45,7 +45,7 @@ export function Login() {
         
         <div className="text-center mb-8">
           <h1 className="text-3xl font-black text-white mb-2 tracking-tight">WMS Scanner</h1>
-          <p className="text-slate-500 font-medium text-sm">
+          <p className="text-slate-400 font-medium text-sm">
             {isRegistering ? 'Crie sua conta para acessar' : 'Faça login no painel de operações'}
           </p>
         </div>
@@ -61,7 +61,7 @@ export function Login() {
             <label htmlFor="login-email" className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">E-mail</label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <Mail size={18} className="text-slate-500" aria-hidden="true" />
+                <Mail size={18} className="text-slate-400" aria-hidden="true" />
               </div>
               <input
                 id="login-email"
@@ -82,7 +82,7 @@ export function Login() {
             <label htmlFor="login-senha" className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Senha</label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <Lock size={18} className="text-slate-500" aria-hidden="true" />
+                <Lock size={18} className="text-slate-400" aria-hidden="true" />
               </div>
               <input
                 id="login-senha"

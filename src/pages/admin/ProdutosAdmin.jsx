@@ -112,7 +112,7 @@ export function ProdutosAdmin() {
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="text-2xl font-black text-white">Produtos</h1>
-          <p className="text-sm text-slate-500 mt-1">Catálogo de EANs conhecidos</p>
+          <p className="text-sm text-slate-400 mt-1">Catálogo de EANs conhecidos</p>
         </div>
         <button onClick={openNew} className="w-full md:w-auto flex justify-center items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold transition-all shadow-lg shadow-blue-600/20">
           <Plus size={18} /> Novo Produto
@@ -121,7 +121,7 @@ export function ProdutosAdmin() {
 
       <div className="mt-8">
         {loading ? (
-          <div className="p-8 text-center text-slate-500 flex justify-center gap-2"><Loader2 className="animate-spin" /> Carregando...</div>
+          <div className="p-8 text-center text-slate-400 flex justify-center gap-2"><Loader2 className="animate-spin" /> Carregando…</div>
         ) : (
           <DataTable
             data={produtos}
@@ -139,7 +139,7 @@ export function ProdutosAdmin() {
                 label: 'S/N',
                 render: (p) => p.controla_sn === false
                   ? <span className="text-xs font-bold text-amber-400">Por quantidade</span>
-                  : <span className="text-xs text-slate-500">Por serial</span>,
+                  : <span className="text-xs text-slate-400">Por serial</span>,
               },
               { key: 'ncm', label: 'NCM', render: (p) => <span className="font-mono text-sm text-slate-400">{p.ncm || '—'}</span> },
               {
@@ -147,7 +147,7 @@ export function ProdutosAdmin() {
                 label: 'Omie',
                 render: (p) => p.omie_codigo
                   ? <span className="text-xs font-bold text-emerald-400">#{p.omie_codigo}</span>
-                  : <span className="text-xs text-slate-600">não sincronizado</span>,
+                  : <span className="text-xs text-slate-400">não sincronizado</span>,
               },
               {
                 key: 'actions',
@@ -212,7 +212,7 @@ export function ProdutosAdmin() {
             <input type="checkbox" checked={controlaSn} onChange={e => setControlaSn(e.target.checked)} className="mt-1 w-4 h-4 accent-blue-500" />
             <span>
               <span className="block text-sm font-semibold text-slate-300">Controla número de série (S/N)</span>
-              <span className="block text-xs text-slate-500">Desmarque para itens sem serial, como bobina de cabo: o projeto passa a registrar só a quantidade.</span>
+              <span className="block text-xs text-slate-400">Desmarque para itens sem serial, como bobina de cabo: o projeto passa a registrar só a quantidade.</span>
             </span>
           </label>
           <div className="flex justify-end gap-3 pt-4">

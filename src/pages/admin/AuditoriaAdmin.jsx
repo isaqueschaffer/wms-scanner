@@ -58,8 +58,8 @@ export function AuditoriaAdmin() {
 
       <div className="mt-8">
         {loading ? (
-          <div className="p-12 text-center text-slate-500 flex justify-center gap-2 font-semibold">
-            <Loader2 className="animate-spin" aria-hidden="true" /> Carregando logs de auditoria...
+          <div className="p-12 text-center text-slate-400 flex justify-center gap-2 font-semibold">
+            <Loader2 className="animate-spin" aria-hidden="true" /> Carregando logs de auditoria…
           </div>
         ) : (
           <DataTable
@@ -72,13 +72,13 @@ export function AuditoriaAdmin() {
                 key: 'criado_em', 
                 label: 'Data/Hora', 
                 tdClassName: 'text-sm text-slate-400 tabular-nums',
-                render: (log) => new Date(log.criado_em).toLocaleString()
+                render: (log) => new Date(log.criado_em).toLocaleString('pt-BR')
               },
               { 
                 key: 'usuario_email', 
                 label: 'Usuário', 
                 tdClassName: 'text-sm font-semibold text-white',
-                render: (log) => log.usuario_email || <span className="text-slate-600 italic">Desconhecido</span>
+                render: (log) => log.usuario_email || <span className="text-slate-400 italic">Desconhecido</span>
               },
               { 
                 key: 'acao', 
@@ -99,7 +99,7 @@ export function AuditoriaAdmin() {
                 tdClassName: 'text-sm text-slate-300 font-medium',
                 render: (log) => (
                   <div className="flex items-center gap-2">
-                    <Database size={14} className="text-slate-500" aria-hidden="true" />
+                    <Database size={14} className="text-slate-400" aria-hidden="true" />
                     {TABLE_NAMES[log.tabela] || log.tabela}
                   </div>
                 )
@@ -107,7 +107,7 @@ export function AuditoriaAdmin() {
               { 
                 key: 'registro_id', 
                 label: 'ID Afetado', 
-                tdClassName: 'font-mono text-xs text-slate-500 break-all max-w-[150px]'
+                tdClassName: 'font-mono text-xs text-slate-400 break-all max-w-[150px]'
               },
               {
                 key: 'actions',
@@ -133,7 +133,7 @@ export function AuditoriaAdmin() {
           <div className="space-y-6">
             <div className="grid grid-cols-2 gap-4 bg-[#0f172a] p-4 rounded-xl border border-[#1e3a5f]/50">
               <div>
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">Ação Realizada</span>
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">Ação Realizada</span>
                 <span className={`px-2 py-1 rounded text-xs font-bold tracking-wider inline-block
                   ${selectedLog.acao === 'INSERT' ? 'bg-green-500/20 text-green-400 border border-green-500/30' :
                     selectedLog.acao === 'UPDATE' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
@@ -143,16 +143,16 @@ export function AuditoriaAdmin() {
                 </span>
               </div>
               <div>
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">Tabela</span>
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">Tabela</span>
                 <span className="text-sm font-semibold text-white">{TABLE_NAMES[selectedLog.tabela] || selectedLog.tabela}</span>
               </div>
               <div>
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">Usuário</span>
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">Usuário</span>
                 <span className="text-sm text-slate-300">{selectedLog.usuario_email || 'Desconhecido'}</span>
               </div>
               <div>
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">Data/Hora</span>
-                <span className="text-sm text-slate-300 tabular-nums">{new Date(selectedLog.criado_em).toLocaleString()}</span>
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">Data/Hora</span>
+                <span className="text-sm text-slate-300 tabular-nums">{new Date(selectedLog.criado_em).toLocaleString('pt-BR')}</span>
               </div>
             </div>
 

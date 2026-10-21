@@ -94,7 +94,7 @@ function FerramentaModal({ ferramenta, tipos, onClose, onUpdate }) {
                 ))}
               </select>
               </Field>
-              <p className="text-xs text-slate-500 mt-1">Crie novos modelos na tela de "Tipos de Ferramenta"</p>
+              <p className="text-xs text-slate-400 mt-1">Crie novos modelos na tela de "Tipos de Ferramenta"</p>
             </div>
 
             <Field label="Estado *">
@@ -197,11 +197,11 @@ function HistoricoModal({ ferramenta, onClose }) {
       </p>
         <div className="space-y-4">
           {loading ? (
-            <div className="text-center text-slate-500 py-8 flex justify-center gap-2">
+            <div className="text-center text-slate-400 py-8 flex justify-center gap-2">
               <Loader2 className="animate-spin" aria-hidden="true" /> Carregando histórico…
             </div>
           ) : historico.length === 0 ? (
-            <div className="text-center text-slate-500 py-8">
+            <div className="text-center text-slate-400 py-8">
               Nenhum histórico registrado para esta ferramenta.
             </div>
           ) : (
@@ -227,7 +227,7 @@ function HistoricoModal({ ferramenta, onClose }) {
                         {h.acao}
                       </span>
                       <span className="text-xs text-slate-400">
-                        {new Date(h.created_at).toLocaleString()}
+                        {new Date(h.created_at).toLocaleString('pt-BR')}
                       </span>
                     </div>
                     {h.tecnicos && (
@@ -296,7 +296,7 @@ export function FerramentasAdmin() {
             <PenTool className="text-blue-500" size={32} aria-hidden="true" />
             Ferramentas
           </h1>
-          <p className="text-slate-500 mt-2">Catálogo de ferramentas, categorias e estoque total.</p>
+          <p className="text-slate-400 mt-2">Catálogo de ferramentas, categorias e estoque total.</p>
         </div>
         
         <button
@@ -308,8 +308,8 @@ export function FerramentasAdmin() {
       </div>
 
       {loading ? (
-        <div className="p-12 text-center text-slate-500 flex justify-center gap-3 items-center">
-          <Loader2 className="animate-spin" size={24} aria-hidden="true" /> Carregando ferramentas...
+        <div className="p-12 text-center text-slate-400 flex justify-center gap-3 items-center">
+          <Loader2 className="animate-spin" size={24} aria-hidden="true" /> Carregando ferramentas…
         </div>
       ) : (
         <DataTable
@@ -325,7 +325,7 @@ export function FerramentasAdmin() {
               render: (f) => (
                 <div>
                   <div className="text-white font-bold">{f.nome}</div>
-                  {f.descricao && <div className="text-xs text-slate-500 mt-1 truncate max-w-[200px]" title={f.descricao}>{f.descricao}</div>}
+                  {f.descricao && <div className="text-xs text-slate-400 mt-1 truncate max-w-[200px]" title={f.descricao}>{f.descricao}</div>}
                 </div>
               )
             },
@@ -376,7 +376,7 @@ export function FerramentasAdmin() {
                   </button>
                   <button 
                     onClick={() => handleDelete(f.id)} 
-                    className="p-2 text-slate-500 hover:text-red-400 transition-colors bg-[#0f172a] rounded-lg border border-[#1e3a5f]/50 hover:border-red-500/30"
+                    className="p-2 text-slate-400 hover:text-red-400 transition-colors bg-[#0f172a] rounded-lg border border-[#1e3a5f]/50 hover:border-red-500/30"
                     title="Excluir" aria-label="Excluir"
                   >
                     <Trash2 size={16} aria-hidden="true" />

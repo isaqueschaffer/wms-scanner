@@ -103,7 +103,7 @@ export function ReunioesAdmin() {
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
         <div>
           <h1 className="text-2xl font-black text-white">Reuniões e Atas</h1>
-          <p className="text-sm text-slate-500 mt-1">Alinhamentos e documentação por projeto</p>
+          <p className="text-sm text-slate-400 mt-1">Alinhamentos e documentação por projeto</p>
         </div>
         
         <div className="flex items-center gap-4 w-full md:w-auto">
@@ -133,17 +133,17 @@ export function ReunioesAdmin() {
       </div>
 
       {!selectedProjeto ? (
-        <div className="flex-1 flex items-center justify-center border-2 border-dashed border-[#1e3a5f] rounded-2xl p-12 text-slate-500 mt-8">
+        <div className="flex-1 flex items-center justify-center border-2 border-dashed border-[#1e3a5f] rounded-2xl p-12 text-slate-400 mt-8">
           Selecione um projeto acima para ver as reuniões.
         </div>
       ) : (
         <div className="mt-8">
           {loading ? (
-            <div className="p-8 text-center text-slate-500 flex justify-center gap-2"><Loader2 className="animate-spin" aria-hidden="true" /> Carregando reuniões…</div>
+            <div className="p-8 text-center text-slate-400 flex justify-center gap-2"><Loader2 className="animate-spin" aria-hidden="true" /> Carregando reuniões…</div>
           ) : (
             <div className="space-y-4">
               {reunioes.length === 0 ? (
-                <div className="p-8 text-center text-slate-500 bg-[#0f172a]/50 rounded-2xl">Nenhuma reunião registrada neste projeto.</div>
+                <div className="p-8 text-center text-slate-400 bg-[#0f172a]/50 rounded-2xl">Nenhuma reunião registrada neste projeto.</div>
               ) : (
                 reunioes.map(r => (
                   <div key={r.id} className="bg-[#0f172a] border border-[#1e3a5f] rounded-2xl p-6 hover:border-blue-500/30 transition-colors shadow-lg">
@@ -171,14 +171,14 @@ export function ReunioesAdmin() {
                     
                     {r.pauta && (
                       <div className="mb-4">
-                        <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Pauta</h4>
+                        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Pauta</h4>
                         <p className="text-sm text-slate-300 whitespace-pre-wrap">{r.pauta}</p>
                       </div>
                     )}
                     
                     {r.ata && (
                       <div className="bg-[#1e293b] p-4 rounded-xl border border-slate-700/50">
-                        <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Ata / Resoluções</h4>
+                        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Ata / Resoluções</h4>
                         <p className="text-sm text-slate-300 whitespace-pre-wrap">{r.ata}</p>
                       </div>
                     )}

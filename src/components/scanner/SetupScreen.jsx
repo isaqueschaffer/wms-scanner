@@ -155,7 +155,7 @@ export function SetupScreen({ onStart }) {
         <div className="flex items-center justify-between mt-6 px-2">
           <button
             onClick={() => supabase.auth.signOut()}
-            className="text-xs font-semibold text-slate-500 hover:text-red-400 transition-colors flex items-center gap-1"
+            className="text-xs font-semibold text-slate-400 hover:text-red-400 transition-colors flex items-center gap-1"
           >
             Sair
           </button>

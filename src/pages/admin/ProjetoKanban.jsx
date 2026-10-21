@@ -125,7 +125,7 @@ export function ProjetoKanban() {
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
         <div>
           <h1 className="text-2xl font-black text-white">Kanban de Projetos</h1>
-          <p className="text-sm text-slate-500 mt-1">Gerencie as tarefas e andamento do projeto</p>
+          <p className="text-sm text-slate-400 mt-1">Gerencie as tarefas e andamento do projeto</p>
         </div>
         
         <div className="flex items-center gap-4 w-full md:w-auto">
@@ -155,11 +155,11 @@ export function ProjetoKanban() {
       </div>
 
       {!selectedProjeto ? (
-        <div className="flex-1 flex items-center justify-center border-2 border-dashed border-[#1e3a5f] rounded-2xl p-12 text-slate-500">
+        <div className="flex-1 flex items-center justify-center border-2 border-dashed border-[#1e3a5f] rounded-2xl p-12 text-slate-400">
           Selecione um projeto acima para ver o Kanban.
         </div>
       ) : loading ? (
-        <div className="p-8 text-center text-slate-500 flex justify-center gap-2"><Loader2 className="animate-spin" aria-hidden="true" /> Carregando tarefas…</div>
+        <div className="p-8 text-center text-slate-400 flex justify-center gap-2"><Loader2 className="animate-spin" aria-hidden="true" /> Carregando tarefas…</div>
       ) : (
         <div className="flex-1 flex gap-6 overflow-x-auto pb-4 items-start">
           {COLUMNS.map(col => {
@@ -201,12 +201,12 @@ export function ProjetoKanban() {
                         <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-800 text-slate-300">
                           {t.tecnicos?.nome || 'Não atribuído'}
                         </span>
-                        <GripVertical size={14} className="text-slate-500 cursor-grab" aria-hidden="true" />
+                        <GripVertical size={14} className="text-slate-400 cursor-grab" aria-hidden="true" />
                       </div>
                     </div>
                   ))}
                   
-                  <button onClick={() => openNew(col.id)} className="w-full py-2 flex justify-center items-center gap-2 text-sm text-slate-500 hover:text-blue-400 hover:bg-[#1e293b] rounded-lg transition-colors border border-transparent hover:border-blue-500/30">
+                  <button onClick={() => openNew(col.id)} className="w-full py-2 flex justify-center items-center gap-2 text-sm text-slate-400 hover:text-blue-400 hover:bg-[#1e293b] rounded-lg transition-colors border border-transparent hover:border-blue-500/30">
                     <Plus size={16} aria-hidden="true" /> Nova Tarefa
                   </button>
                 </div>

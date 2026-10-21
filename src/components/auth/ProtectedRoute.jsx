@@ -7,8 +7,8 @@ export function ProtectedRoute({ children }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0a0e1a] flex items-center justify-center text-slate-500 gap-2 font-semibold">
-        <Loader2 className="animate-spin" /> Autenticando...
+      <div className="min-h-screen bg-[#0a0e1a] flex items-center justify-center text-slate-400 gap-2 font-semibold">
+        <Loader2 className="animate-spin" /> Autenticando…
       </div>
     )
   }

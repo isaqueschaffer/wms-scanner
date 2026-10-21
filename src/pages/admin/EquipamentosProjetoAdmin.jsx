@@ -45,7 +45,7 @@ function EditablePatrimonio({ eq, onUpdate }) {
         onKeyDown={e => e.key === 'Enter' && handleSave()}
         disabled={loading}
         className="w-full max-w-[120px] bg-[#111827] border border-blue-500 rounded px-2 py-1 text-sm text-white focus:outline-none"
-        placeholder="Nº..."
+        placeholder="Nº…"
       />
     )
   }
@@ -59,7 +59,7 @@ function EditablePatrimonio({ eq, onUpdate }) {
       {eq.n_patrimonio ? (
         <span className="text-emerald-400 font-bold font-mono">{eq.n_patrimonio}</span>
       ) : (
-        <span className="text-slate-500 italic text-xs">Adicionar...</span>
+        <span className="text-slate-400 italic text-xs">Adicionar…</span>
       )}
     </div>
   )
@@ -336,8 +336,8 @@ export function EquipamentosProjetoAdmin() {
       {/* Tabela via DataTable */}
       <div className="mt-8">
         {loading ? (
-          <div className="p-8 text-center text-slate-500 flex justify-center gap-2">
-            <Loader2 className="animate-spin" /> Carregando equipamentos...
+          <div className="p-8 text-center text-slate-400 flex justify-center gap-2">
+            <Loader2 className="animate-spin" /> Carregando equipamentos…
           </div>
         ) : (
           <DataTable
@@ -352,7 +352,7 @@ export function EquipamentosProjetoAdmin() {
                 key: 'created_at', 
                 label: 'Data/Hora', 
                 tdClassName: 'text-sm text-slate-400 tabular-nums',
-                render: (eq) => new Date(eq.created_at).toLocaleString() 
+                render: (eq) => new Date(eq.created_at).toLocaleString('pt-BR') 
               },
               { key: 'ean', label: 'EAN', tdClassName: 'font-mono text-sm text-slate-400' },
               { key: 'produto', label: 'Produto', render: (eq) => <span className="font-semibold text-white">{eq.produtos?.nome || 'Desconhecido'}</span> },
@@ -361,7 +361,7 @@ export function EquipamentosProjetoAdmin() {
                 label: 'S/N',
                 render: (eq) => eq.sn
                   ? <span className="font-mono font-bold text-blue-400 tracking-wide">{eq.sn}</span>
-                  : <span className="text-xs italic text-slate-500">Sem S/N</span>,
+                  : <span className="text-xs italic text-slate-400">Sem S/N</span>,
               },
               {
                 key: 'quantidade',
@@ -387,14 +387,14 @@ export function EquipamentosProjetoAdmin() {
                     )}
                     <button
                       onClick={() => setFormModal({ open: true, equipamento: eq })}
-                      className="p-2 text-slate-500 hover:text-blue-400 transition-colors bg-[#0f172a] rounded-lg border border-[#1e3a5f]/50 hover:border-blue-500/30"
+                      className="p-2 text-slate-400 hover:text-blue-400 transition-colors bg-[#0f172a] rounded-lg border border-[#1e3a5f]/50 hover:border-blue-500/30"
                       title="Editar equipamento" aria-label="Editar equipamento"
                     >
                       <Pencil size={16} />
                     </button>
                     <button 
                       onClick={() => handleDelete(eq.id)} 
-                      className="p-2 text-slate-500 hover:text-red-400 transition-colors bg-[#0f172a] rounded-lg border border-[#1e3a5f]/50 hover:border-red-500/30"
+                      className="p-2 text-slate-400 hover:text-red-400 transition-colors bg-[#0f172a] rounded-lg border border-[#1e3a5f]/50 hover:border-red-500/30"
                       title="Excluir bipe" aria-label="Excluir bipe"
                     >
                       <Trash2 size={16} />
@@ -425,26 +425,26 @@ export function EquipamentosProjetoAdmin() {
         <div className="space-y-4">
               {alocacaoModal?.alocacao_equipamentos?.map((aloc, idx) => (
                 <div key={aloc.id || idx} className="bg-[#0f172a] p-4 rounded-xl border border-[#1e3a5f]/50 relative">
-                  <div className="absolute top-4 right-4 text-xs font-medium text-slate-500 tabular-nums">
-                    {new Date(aloc.data_alocacao).toLocaleString()}
+                  <div className="absolute top-4 right-4 text-xs font-medium text-slate-400 tabular-nums">
+                    {new Date(aloc.data_alocacao).toLocaleString('pt-BR')}
                   </div>
                   
                   <div className="flex flex-col gap-2">
                     <div>
-                      <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Técnico</span>
+                      <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Técnico</span>
                       <p className="text-red-400 font-semibold">{aloc.tecnicos?.nome || 'N/A'}</p>
                     </div>
                     
                     {aloc.tasks?.titulo && (
                       <div>
-                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Tarefa / Projeto</span>
+                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Tarefa / Projeto</span>
                         <p className="text-white text-sm">{aloc.tasks.titulo}</p>
                       </div>
                     )}
                     
                     {aloc.observacao && (
                       <div>
-                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Observação</span>
+                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Observação</span>
                         <p className="text-slate-300 text-sm italic">"{aloc.observacao}"</p>
                       </div>
                     )}
@@ -471,14 +471,14 @@ export function EquipamentosProjetoAdmin() {
               <tbody>
                 {relatorioData.length === 0 ? (
                   <tr>
-                    <td colSpan="3" className="p-6 text-center text-slate-500">Nenhum equipamento bipado.</td>
+                    <td colSpan="3" className="p-6 text-center text-slate-400">Nenhum equipamento bipado.</td>
                   </tr>
                 ) : (
                   relatorioData.map(item => (
                     <tr key={`${item.ean}-${item.nome}`} className="border-b border-[#1e3a5f]/50 hover:bg-[#1e3a5f]/30">
                       <td className="p-3 font-mono text-slate-300">{item.ean}</td>
                       <td className="p-3 text-white font-semibold">{item.nome}</td>
-                      <td className="p-3 text-center text-blue-400 font-black text-lg">{item.count}</td>
+                      <td className="p-3 text-center text-blue-400 font-black text-lg tabular-nums">{item.count}</td>
                     </tr>
                   ))
                 )}
@@ -487,7 +487,7 @@ export function EquipamentosProjetoAdmin() {
                 {relatorioData.length > 0 && (
                   <tr className="bg-[#111827]">
                     <td colSpan="2" className="p-3 text-right text-slate-400 font-bold uppercase tracking-wider">Total de Produtos:</td>
-                    <td className="p-3 text-center text-white font-black text-xl">{totalProdutos}</td>
+                    <td className="p-3 text-center text-white font-black text-xl tabular-nums">{totalProdutos}</td>
                   </tr>
                 )}
               </tbody>

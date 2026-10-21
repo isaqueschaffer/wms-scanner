@@ -230,7 +230,7 @@ export function AlocacaoEquipamentosAdmin() {
             <ArrowRightLeft className="text-blue-500" aria-hidden="true" />
             Alocação de Equipamentos
           </h1>
-          <p className="text-sm text-slate-500 mt-1">Registre a entrega de equipamentos para os técnicos em campo</p>
+          <p className="text-sm text-slate-400 mt-1">Registre a entrega de equipamentos para os técnicos em campo</p>
         </div>
 
         <div className="bg-[#0f172a] border border-[#1e3a5f] rounded-2xl p-6 md:p-8 shadow-xl">
@@ -274,7 +274,7 @@ export function AlocacaoEquipamentosAdmin() {
                 {tasks.map(t => <option key={t.id} value={t.id}>{t.titulo}</option>)}
               </select>
               </Field>
-              <p className="text-xs text-slate-500 mt-1">Você pode vincular esta saída de equipamento a uma task específica do Kanban.</p>
+              <p className="text-xs text-slate-400 mt-1">Você pode vincular esta saída de equipamento a uma task específica do Kanban.</p>
             </div>
 
             <div className="pt-4 border-t border-[#1e3a5f]">
@@ -321,7 +321,7 @@ export function AlocacaoEquipamentosAdmin() {
         <h2 className="text-xl font-bold text-white mb-6">Histórico de Alocações</h2>
         
         {loadingAlocacoes ? (
-          <div className="p-8 text-center text-slate-500 flex justify-center gap-2">
+          <div className="p-8 text-center text-slate-400 flex justify-center gap-2">
             <Loader2 className="animate-spin" aria-hidden="true" /> Carregando histórico…
           </div>
         ) : (
@@ -385,7 +385,7 @@ export function AlocacaoEquipamentosAdmin() {
                     </button>
                     <button 
                       onClick={() => handleDeleteAlocacao(aloc.id)} 
-                      className="p-2 text-slate-500 hover:text-red-400 transition-colors bg-[#0f172a] rounded-lg border border-[#1e3a5f]/50 hover:border-red-500/30"
+                      className="p-2 text-slate-400 hover:text-red-400 transition-colors bg-[#0f172a] rounded-lg border border-[#1e3a5f]/50 hover:border-red-500/30"
                       title="Excluir registro" aria-label="Excluir registro"
                     >
                       <Trash2 size={16} aria-hidden="true" />

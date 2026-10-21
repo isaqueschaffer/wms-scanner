@@ -149,7 +149,7 @@ export function TiposFerramentasAdmin() {
             <PenTool className="text-blue-500" size={32} aria-hidden="true" />
             Tipos de Ferramenta
           </h1>
-          <p className="text-slate-500 mt-2">Cadastre os modelos base para facilitar a adição no estoque.</p>
+          <p className="text-slate-400 mt-2">Cadastre os modelos base para facilitar a adição no estoque.</p>
         </div>
         
         <button
@@ -161,7 +161,7 @@ export function TiposFerramentasAdmin() {
       </div>
 
       {loading ? (
-        <div className="p-12 text-center text-slate-500"><Loader2 className="animate-spin inline mr-2" aria-hidden="true" /> Carregando…</div>
+        <div className="p-12 text-center text-slate-400"><Loader2 className="animate-spin inline mr-2" aria-hidden="true" /> Carregando…</div>
       ) : (
         <DataTable
           data={tipos}
@@ -173,7 +173,7 @@ export function TiposFerramentasAdmin() {
             { key: 'nome', label: 'Nome do Modelo', tdClassName: 'text-white font-bold' },
             { key: 'categoria', label: 'Categoria', tdClassName: 'text-slate-300' },
             { key: 'quantidade', label: 'Em Estoque', render: (t) => <span className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-lg font-bold tabular-nums">{t.quantidade} un</span> },
-            { key: 'descricao', label: 'Descrição', tdClassName: 'text-slate-500 text-sm' },
+            { key: 'descricao', label: 'Descrição', tdClassName: 'text-slate-400 text-sm' },
             {
               key: 'actions',
               label: '',

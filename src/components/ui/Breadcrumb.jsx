@@ -10,7 +10,7 @@ export function Breadcrumb({ items }) {
           const ultimo = i === items.length - 1
           return (
             <li key={i} className="flex items-center gap-1.5 min-w-0">
-              {i > 0 && <ChevronRight size={14} aria-hidden="true" className="shrink-0 text-slate-600" />}
+              {i > 0 && <ChevronRight size={14} aria-hidden="true" className="shrink-0 text-slate-400" />}
               {item.to && !ultimo ? (
                 <Link to={item.to} className="truncate max-w-[14rem] hover:text-white hover:underline">
                   {item.label}

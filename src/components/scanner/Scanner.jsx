@@ -466,7 +466,7 @@ export function Scanner({ session, onReset }) {
     ? 'text-green-400'
     : readCount > 0
     ? 'text-blue-400'
-    : 'text-slate-500'
+    : 'text-slate-400'
 
   return (
     <div className="min-h-screen bg-[#0a0e1a] flex flex-col">
@@ -480,7 +480,7 @@ export function Scanner({ session, onReset }) {
           </div>
           <div>
             <h1 className="text-sm font-black text-white leading-none">WMS Scanner</h1>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-slate-400 mt-0.5">
               {session.clienteNome} <span className="text-blue-500">›</span> {session.projetoNome}
             </p>
           </div>
@@ -570,7 +570,7 @@ export function Scanner({ session, onReset }) {
                 )}
                 
                 <div className="mt-6 flex flex-col gap-2">
-                  <span className="text-slate-500 text-sm font-semibold uppercase tracking-wider text-center">Ou escolha manualmente</span>
+                  <span className="text-slate-400 text-sm font-semibold uppercase tracking-wider text-center">Ou escolha manualmente</span>
                   <select
                     aria-label="Escolher produto manualmente"
                     onChange={(e) => {
@@ -613,7 +613,7 @@ export function Scanner({ session, onReset }) {
                     <Unlock size={16} aria-hidden="true" />
                   </button>
                 </div>
-                <p className="text-xs text-slate-500 mt-3">Pressione F2 para ler um novo EAN</p>
+                <p className="text-xs text-slate-400 mt-3">Pressione F2 para ler um novo EAN</p>
               </div>
             )}
           </div>
@@ -645,7 +645,7 @@ export function Scanner({ session, onReset }) {
                   transition-all
                 "
               />
-              <p className="text-xs text-slate-500 mt-2 text-center">Digite a quantidade e pressione Enter</p>
+              <p className="text-xs text-slate-400 mt-2 text-center">Digite a quantidade e pressione Enter</p>
             </div>
           )}
 
@@ -718,7 +718,7 @@ export function Scanner({ session, onReset }) {
             bg-[#111827] border rounded-2xl p-6 text-center
             ${isComplete ? 'border-green-500/50' : 'border-[#1e3a5f]'}
           `}>
-            <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">Progresso</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Progresso</p>
             <div className={`text-7xl font-black leading-none tabular-nums ${countColor}`}>
               {readCount}
             </div>
@@ -751,7 +751,7 @@ export function Scanner({ session, onReset }) {
           {/* Último bipe */}
           {history[0] && (
             <div className="bg-[#111827] border border-green-800/40 rounded-2xl p-4">
-              <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">Último Bipe</p>
+              <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Último Bipe</p>
               <p className="font-mono text-green-300 font-bold text-lg break-all leading-snug">{history[0].sn}</p>
               <p className="text-slate-400 text-xs mt-1 tabular-nums">{history[0].time}</p>
             </div>
@@ -760,7 +760,7 @@ export function Scanner({ session, onReset }) {
           {/* Seriais bipados (editáveis) */}
           {history.length > 0 && (
             <div className="bg-[#111827] border border-[#1e3a5f] rounded-2xl p-4 flex-1">
-              <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">
+              <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">
                 Seriais Bipados (<span className="tabular-nums">{history.length}</span>)
               </p>
               <ul className="space-y-1 max-h-[50vh] overflow-y-auto">

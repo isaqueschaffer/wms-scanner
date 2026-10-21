@@ -132,7 +132,7 @@ export function DataTable({
         {/* Barra de Busca */}
         <div className="relative flex-1 w-full">
           <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-            <Search size={18} className="text-slate-500" aria-hidden="true" />
+            <Search size={18} className="text-slate-400" aria-hidden="true" />
           </div>
           <input
             type="search"
@@ -149,7 +149,7 @@ export function DataTable({
         {/* Filtro de Data */}
         {dateKey && (
           <div className="flex items-center gap-2 bg-[#111827] border border-[#1e3a5f] rounded-xl px-3 py-1.5 h-[50px] w-full md:w-auto">
-            <Calendar size={18} className="text-slate-500 shrink-0" aria-hidden="true" />
+            <Calendar size={18} className="text-slate-400 shrink-0" aria-hidden="true" />
             <input
               type="date"
               aria-label="Data inicial"

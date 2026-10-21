@@ -70,8 +70,8 @@ function EditableAtribuicao({ a }) {
           )}
         </div>
         <div className="text-right">
-          <div className="text-xs text-slate-500">
-            Atribuído: {a.data_atribuicao ? new Date(a.data_atribuicao + 'T00:00:00').toLocaleDateString() : '-'}
+          <div className="text-xs text-slate-400">
+            Atribuído: {a.data_atribuicao ? new Date(a.data_atribuicao + 'T00:00:00').toLocaleDateString('pt-BR') : '-'}
           </div>
         </div>
       </div>
@@ -151,7 +151,7 @@ function FerramentasTecnicoModal({ tecnico, onClose }) {
   return (
     <Modal isOpen={!!tecnico} onClose={onClose} title={`Ferramentas - ${tecnico.nome}`}>
       {loading ? (
-        <div className="p-8 text-center text-slate-500 flex justify-center gap-2"><Loader2 className="animate-spin" aria-hidden="true" /> Carregando...</div>
+        <div className="p-8 text-center text-slate-400 flex justify-center gap-2"><Loader2 className="animate-spin" aria-hidden="true" /> Carregando…</div>
       ) : atribuicoes.length === 0 ? (
         <div className="p-8 text-center text-slate-400">Nenhuma ferramenta atribuída a este técnico.</div>
       ) : (
@@ -247,7 +247,7 @@ export function TecnicosAdmin() {
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="text-2xl font-black text-white">Técnicos</h1>
-          <p className="text-sm text-slate-500 mt-1">Gerencie a equipe de campo e projetos</p>
+          <p className="text-sm text-slate-400 mt-1">Gerencie a equipe de campo e projetos</p>
         </div>
         <button onClick={openNew} className="w-full md:w-auto flex justify-center items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold transition-all shadow-lg shadow-blue-600/20">
           <Plus size={18} aria-hidden="true" /> Novo Técnico
@@ -256,7 +256,7 @@ export function TecnicosAdmin() {
 
       <div className="mt-8">
         {loading ? (
-          <div className="p-8 text-center text-slate-500 flex justify-center gap-2"><Loader2 className="animate-spin" aria-hidden="true" /> Carregando...</div>
+          <div className="p-8 text-center text-slate-400 flex justify-center gap-2"><Loader2 className="animate-spin" aria-hidden="true" /> Carregando…</div>
         ) : (
           <DataTable
             data={tecnicos}

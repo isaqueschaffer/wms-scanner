@@ -341,7 +341,7 @@ export function AtribuicaoFerramentasAdmin() {
             <ArrowRightLeft className="text-blue-500" size={32} aria-hidden="true" />
             Atribuição de Ferramentas
           </h1>
-          <p className="text-slate-500 mt-2">Controle de quem está com quais ferramentas.</p>
+          <p className="text-slate-400 mt-2">Controle de quem está com quais ferramentas.</p>
         </div>
         
         <button
@@ -353,8 +353,8 @@ export function AtribuicaoFerramentasAdmin() {
       </div>
 
       {loading ? (
-        <div className="p-12 text-center text-slate-500 flex justify-center gap-3 items-center">
-          <Loader2 className="animate-spin" size={24} aria-hidden="true" /> Carregando atribuições...
+        <div className="p-12 text-center text-slate-400 flex justify-center gap-3 items-center">
+          <Loader2 className="animate-spin" size={24} aria-hidden="true" /> Carregando atribuições…
         </div>
       ) : (
         <DataTable
@@ -376,7 +376,7 @@ export function AtribuicaoFerramentasAdmin() {
                   <div className="text-blue-400 font-semibold">
                     {a.ferramentas?.identificador ? `[${a.ferramentas.identificador}] ` : ''}{a.ferramentas?.nome}
                   </div>
-                  <div className="text-xs text-slate-500">{a.ferramentas?.categoria}</div>
+                  <div className="text-xs text-slate-400">{a.ferramentas?.categoria}</div>
                 </div>
               )
             },
@@ -401,13 +401,13 @@ export function AtribuicaoFerramentasAdmin() {
               key: 'data_atribuicao', 
               label: 'Data Atribuição', 
               tdClassName: 'text-xs text-slate-400',
-              render: (a) => a.data_atribuicao ? new Date(a.data_atribuicao + 'T00:00:00').toLocaleDateString() : '-'
+              render: (a) => a.data_atribuicao ? new Date(a.data_atribuicao + 'T00:00:00').toLocaleDateString('pt-BR') : '-'
             },
             { 
               key: 'data_verificacao', 
               label: 'Verificação', 
               tdClassName: 'text-xs text-slate-400',
-              render: (a) => a.data_verificacao ? new Date(a.data_verificacao + 'T00:00:00').toLocaleDateString() : '-'
+              render: (a) => a.data_verificacao ? new Date(a.data_verificacao + 'T00:00:00').toLocaleDateString('pt-BR') : '-'
             },
             { 
               key: 'observacao', 
