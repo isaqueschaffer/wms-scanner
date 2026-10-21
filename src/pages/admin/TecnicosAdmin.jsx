@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { Modal } from '../../components/ui/Modal'
 import { DataTable } from '../../components/ui/DataTable'
+import { Field } from '../../components/ui/Field'
 import { Pencil, Trash2, Plus, Loader2, PenTool, Check } from 'lucide-react'
 
 function EditableAtribuicao({ a }) {
+  const obsId = useId()
   const [estado, setEstado] = useState(a.ferramentas?.estado || 'Ótimo')
   const [obs, setObs] = useState(a.observacao_verificacao || '')
   const [dataVerificacao, setDataVerificacao] = useState(a.data_verificacao || new Date().toISOString().split('T')[0])
@@ -75,9 +77,9 @@ function EditableAtribuicao({ a }) {
       </div>
       
       <div className="flex flex-col md:flex-row gap-3">
-        <div className="w-full md:w-1/4">
-          <label className="block text-xs font-semibold text-slate-400 mb-1">Estado</label>
+        <Field label="Estado" className="w-full md:w-1/4" labelClassName="block text-xs font-semibold text-slate-400 mb-1">
           <select 
+            name="estado"
             value={estado} 
             onChange={e => setEstado(e.target.value)}
             className="w-full px-3 py-2 rounded-lg bg-[#1e293b] border border-[#1e3a5f] text-sm text-white focus:outline-none focus:border-blue-500"
@@ -85,21 +87,24 @@ function EditableAtribuicao({ a }) {
             <option value="">-- Selecione --</option>
             {ESTADOS.map(est => <option key={est} value={est}>{est}</option>)}
           </select>
-        </div>
-        <div className="w-full md:w-1/4">
-          <label className="block text-xs font-semibold text-slate-400 mb-1">Data Verificação</label>
+        </Field>
+        <Field label="Data Verificação" className="w-full md:w-1/4" labelClassName="block text-xs font-semibold text-slate-400 mb-1">
           <input 
             type="date" 
+            name="data_verificacao"
             value={dataVerificacao} 
             onChange={e => setDataVerificacao(e.target.value)}
             className={`w-full px-3 py-2 rounded-lg bg-[#1e293b] border ${isVencido ? 'border-red-500/50' : 'border-[#1e3a5f]'} text-sm text-white focus:outline-none focus:border-blue-500`}
           />
-        </div>
+        </Field>
         <div className="w-full md:flex-1">
-          <label className="block text-xs font-semibold text-slate-400 mb-1">Observação</label>
+          <label htmlFor={obsId} className="block text-xs font-semibold text-slate-400 mb-1">Observação</label>
           <div className="flex gap-2">
             <input 
+              id={obsId}
               type="text" 
+              name="observacao_verificacao"
+              autoComplete="off"
               value={obs} 
               onChange={e => setObs(e.target.value)}
               placeholder="Ex: Entrega ok"
@@ -112,7 +117,7 @@ function EditableAtribuicao({ a }) {
                 ${saved ? 'bg-green-600 hover:bg-green-500 text-white' : 'bg-blue-600 hover:bg-blue-500 text-white disabled:opacity-50'}
               `}
             >
-              {saving ? <Loader2 size={14} className="animate-spin" /> : saved ? <><Check size={14} /> Salvo</> : 'Salvar'}
+              {saving ? <Loader2 size={14} className="animate-spin" aria-hidden="true" /> : saved ? <><Check size={14} aria-hidden="true" /> Salvo</> : 'Salvar'}
             </button>
           </div>
         </div>
@@ -146,7 +151,7 @@ function FerramentasTecnicoModal({ tecnico, onClose }) {
   return (
     <Modal isOpen={!!tecnico} onClose={onClose} title={`Ferramentas - ${tecnico.nome}`}>
       {loading ? (
-        <div className="p-8 text-center text-slate-500 flex justify-center gap-2"><Loader2 className="animate-spin" /> Carregando...</div>
+        <div className="p-8 text-center text-slate-500 flex justify-center gap-2"><Loader2 className="animate-spin" aria-hidden="true" /> Carregando...</div>
       ) : atribuicoes.length === 0 ? (
         <div className="p-8 text-center text-slate-400">Nenhuma ferramenta atribuída a este técnico.</div>
       ) : (
@@ -245,13 +250,13 @@ export function TecnicosAdmin() {
           <p className="text-sm text-slate-500 mt-1">Gerencie a equipe de campo e projetos</p>
         </div>
         <button onClick={openNew} className="w-full md:w-auto flex justify-center items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold transition-all shadow-lg shadow-blue-600/20">
-          <Plus size={18} /> Novo Técnico
+          <Plus size={18} aria-hidden="true" /> Novo Técnico
         </button>
       </div>
 
       <div className="mt-8">
         {loading ? (
-          <div className="p-8 text-center text-slate-500 flex justify-center gap-2"><Loader2 className="animate-spin" /> Carregando...</div>
+          <div className="p-8 text-center text-slate-500 flex justify-center gap-2"><Loader2 className="animate-spin" aria-hidden="true" /> Carregando...</div>
         ) : (
           <DataTable
             data={tecnicos}
@@ -275,13 +280,13 @@ export function TecnicosAdmin() {
                 render: (t) => (
                   <>
                     <button onClick={() => setFerramentasModalTecnico(t)} className="p-2 text-slate-400 hover:text-green-400 transition-colors bg-[#0f172a] rounded-lg border border-[#1e3a5f]/50 hover:border-green-500/30" title="Ver Ferramentas" aria-label="Ver Ferramentas">
-                      <PenTool size={16} />
+                      <PenTool size={16} aria-hidden="true" />
                     </button>
                     <button onClick={() => openEdit(t)} className="p-2 text-slate-400 hover:text-blue-400 transition-colors bg-[#0f172a] rounded-lg border border-[#1e3a5f]/50 hover:border-blue-500/30" title="Editar" aria-label="Editar">
-                      <Pencil size={16} />
+                      <Pencil size={16} aria-hidden="true" />
                     </button>
                     <button onClick={() => handleDelete(t.id)} className="p-2 text-slate-400 hover:text-red-400 transition-colors bg-[#0f172a] rounded-lg border border-[#1e3a5f]/50 hover:border-red-500/30" title="Excluir" aria-label="Excluir">
-                      <Trash2 size={16} />
+                      <Trash2 size={16} aria-hidden="true" />
                     </button>
                   </>
                 )
@@ -293,38 +298,43 @@ export function TecnicosAdmin() {
 
       <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={editId ? 'Editar Técnico' : 'Novo Técnico'}>
         <form onSubmit={handleSave} className="space-y-4">
-          <div>
-            <label className="block text-sm font-semibold text-slate-300 mb-2">Nome</label>
+          <Field label="Nome">
             <input
               type="text"
+              name="nome"
+              autoComplete="off"
               value={nome}
               onChange={e => setNome(e.target.value)}
               className="w-full px-4 py-3 rounded-xl bg-[#0f172a] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500"
               required
             />
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-slate-300 mb-2">Telefone</label>
+          </Field>
+          <Field label="Telefone">
             <input
               type="text"
+              name="telefone"
+              autoComplete="off"
+              inputMode="tel"
               value={telefone}
               onChange={e => setTelefone(e.target.value)}
               className="w-full px-4 py-3 rounded-xl bg-[#0f172a] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500"
             />
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-slate-300 mb-2">Cidade</label>
+          </Field>
+          <Field label="Cidade">
             <input
               type="text"
+              name="cidade"
+              autoComplete="off"
               value={cidade}
               onChange={e => setCidade(e.target.value)}
               className="w-full px-4 py-3 rounded-xl bg-[#0f172a] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500"
             />
-          </div>
+          </Field>
           <div className="flex items-center gap-2">
             <input
               type="checkbox"
               id="ativo"
+              name="ativo"
               checked={ativo}
               onChange={e => setAtivo(e.target.checked)}
               className="w-5 h-5 rounded border-[#1e3a5f] bg-[#0f172a] checked:bg-blue-600 cursor-pointer"
@@ -335,7 +345,7 @@ export function TecnicosAdmin() {
           <div className="flex justify-end gap-3 pt-4">
             <button type="button" onClick={() => setModalOpen(false)} className="px-5 py-2.5 rounded-xl bg-slate-800 text-slate-300 font-semibold hover:bg-slate-700">Cancelar</button>
             <button type="submit" disabled={!nome.trim() || saving} className="px-5 py-2.5 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-500 flex items-center gap-2 disabled:opacity-50">
-              {saving ? <Loader2 size={16} className="animate-spin" /> : null} Salvar
+              {saving ? <Loader2 size={16} className="animate-spin" aria-hidden="true" /> : null} Salvar
             </button>
           </div>
         </form>

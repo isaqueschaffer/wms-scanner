@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { Loader2, Plus, Pencil, Trash2, CalendarDays } from 'lucide-react'
 import { Modal } from '../../components/ui/Modal'
+import { Field } from '../../components/ui/Field'
 import { DataTable } from '../../components/ui/DataTable'
 
 export function ReunioesAdmin() {
@@ -106,8 +107,10 @@ export function ReunioesAdmin() {
         </div>
         
         <div className="flex items-center gap-4 w-full md:w-auto">
-          {loadingProjetos ? <Loader2 className="animate-spin text-blue-500" /> : (
+          {loadingProjetos ? <Loader2 className="animate-spin text-blue-500" aria-label="Carregando projetos" role="status" /> : (
             <select
+              name="projeto_id"
+              aria-label="Projeto"
               value={selectedProjeto}
               onChange={e => setSelectedProjeto(e.target.value)}
               className="w-full md:w-80 px-4 py-2.5 rounded-xl bg-[#0f172a] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500 font-semibold"
@@ -124,7 +127,7 @@ export function ReunioesAdmin() {
             onClick={openNew} 
             className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
           >
-            <Plus size={18} /> Nova Reunião
+            <Plus size={18} aria-hidden="true" /> Nova Reunião
           </button>
         </div>
       </div>
@@ -136,7 +139,7 @@ export function ReunioesAdmin() {
       ) : (
         <div className="mt-8">
           {loading ? (
-            <div className="p-8 text-center text-slate-500 flex justify-center gap-2"><Loader2 className="animate-spin" /> Carregando reuniões...</div>
+            <div className="p-8 text-center text-slate-500 flex justify-center gap-2"><Loader2 className="animate-spin" aria-hidden="true" /> Carregando reuniões…</div>
           ) : (
             <div className="space-y-4">
               {reunioes.length === 0 ? (
@@ -147,7 +150,7 @@ export function ReunioesAdmin() {
                     <div className="flex justify-between items-start mb-4">
                       <div className="flex items-center gap-3">
                         <div className="bg-blue-500/20 text-blue-400 p-3 rounded-xl border border-blue-500/30">
-                          <CalendarDays size={20} />
+                          <CalendarDays size={20} aria-hidden="true" />
                         </div>
                         <div>
                           <h3 className="text-lg font-bold text-white leading-none mb-1">{r.titulo}</h3>
@@ -158,10 +161,10 @@ export function ReunioesAdmin() {
                       </div>
                       <div className="flex items-center gap-2">
                         <button onClick={() => openEdit(r)} className="p-2 text-slate-400 hover:text-blue-400 transition-colors bg-slate-800 rounded-lg border border-transparent hover:border-blue-500/30" title="Editar" aria-label="Editar">
-                          <Pencil size={16} />
+                          <Pencil size={16} aria-hidden="true" />
                         </button>
                         <button onClick={() => handleDelete(r.id)} className="p-2 text-slate-400 hover:text-red-400 transition-colors bg-slate-800 rounded-lg border border-transparent hover:border-red-500/30" title="Excluir" aria-label="Excluir">
-                          <Trash2 size={16} />
+                          <Trash2 size={16} aria-hidden="true" />
                         </button>
                       </div>
                     </div>
@@ -190,50 +193,54 @@ export function ReunioesAdmin() {
       <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={editId ? 'Editar Reunião' : 'Nova Reunião'}>
         <form onSubmit={handleSave} className="space-y-4">
           <div className="grid grid-cols-3 gap-4">
-            <div className="col-span-2">
-              <label className="block text-sm font-semibold text-slate-300 mb-2">Título / Assunto</label>
+            <Field label="Título / Assunto" className="col-span-2">
               <input
+                name="titulo"
+                autoComplete="off"
                 type="text"
                 value={titulo}
                 onChange={e => setTitulo(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl bg-[#0f172a] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500"
                 required
               />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-slate-300 mb-2">Data</label>
+            </Field>
+            <Field label="Data">
               <input
+                name="data_reuniao"
+                autoComplete="off"
                 type="date"
                 value={dataReuniao}
                 onChange={e => setDataReuniao(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl bg-[#0f172a] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500"
                 required
               />
-            </div>
+            </Field>
           </div>
-          <div>
-            <label className="block text-sm font-semibold text-slate-300 mb-2">Pauta (O que será discutido?)</label>
+          <Field label="Pauta (O que será discutido?)">
             <textarea
+              name="pauta"
+              autoComplete="off"
               value={pauta}
               onChange={e => setPauta(e.target.value)}
               rows={3}
               className="w-full px-4 py-3 rounded-xl bg-[#0f172a] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500 resize-none"
             />
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-slate-300 mb-2">Ata da Reunião (Resoluções, Próximos Passos)</label>
+          </Field>
+          <Field label="Ata da Reunião (Resoluções, Próximos Passos)">
             <textarea
+              name="ata"
+              autoComplete="off"
               value={ata}
               onChange={e => setAta(e.target.value)}
               rows={6}
               className="w-full px-4 py-3 rounded-xl bg-[#0f172a] border border-[#1e3a5f] text-white focus:outline-none focus:border-green-500 resize-none"
             />
-          </div>
+          </Field>
           
           <div className="flex justify-end gap-3 pt-4">
             <button type="button" onClick={() => setModalOpen(false)} className="px-5 py-2.5 rounded-xl bg-slate-800 text-slate-300 font-semibold hover:bg-slate-700">Cancelar</button>
             <button type="submit" disabled={!titulo.trim() || saving} className="px-5 py-2.5 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-500 flex items-center gap-2 disabled:opacity-50">
-              {saving ? <Loader2 size={16} className="animate-spin" /> : null} Salvar
+              {saving ? <Loader2 size={16} className="animate-spin" aria-hidden="true" /> : null} Salvar
             </button>
           </div>
         </form>

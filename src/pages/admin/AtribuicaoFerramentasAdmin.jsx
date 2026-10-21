@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
-import { Loader2, ArrowRightLeft, Plus, Edit, Trash2, X, ArchiveRestore, History } from 'lucide-react'
+import { Loader2, ArrowRightLeft, Plus, ArchiveRestore } from 'lucide-react'
 import { DataTable } from '../../components/ui/DataTable'
+import { Modal } from '../../components/ui/Modal'
+import { Field } from '../../components/ui/Field'
 
 function AtribuicaoModal({ atribuicao, ferramentas, tecnicos, atribuicoes, onClose, onUpdate }) {
   const isEditing = !!atribuicao
@@ -82,23 +84,23 @@ function AtribuicaoModal({ atribuicao, ferramentas, tecnicos, atribuicoes, onClo
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="bg-[#111827] border border-[#1e3a5f] rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-        <div className="flex items-center justify-between p-6 border-b border-[#1e3a5f] shrink-0">
-          <h3 className="text-xl font-bold text-white flex items-center gap-2">
-            <ArrowRightLeft className="text-blue-500" />
-            {isEditing ? 'Editar Atribuição' : 'Nova Atribuição de Ferramenta'}
-          </h3>
-          <button onClick={onClose} className="text-slate-500 hover:text-white p-2 rounded-lg transition-colors">
-            <X size={20} />
-          </button>
-        </div>
-        <form onSubmit={handleSave} className="p-6 space-y-6 overflow-y-auto">
+    <Modal
+      isOpen
+      onClose={onClose}
+      maxWidth="max-w-2xl"
+      title={
+        <span className="flex items-center gap-2">
+          <ArrowRightLeft className="text-blue-500" aria-hidden="true" />
+          {isEditing ? 'Editar Atribuição' : 'Nova Atribuição de Ferramenta'}
+        </span>
+      }
+    >
+        <form onSubmit={handleSave} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             
-            <div className="md:col-span-2">
-              <label className="block text-sm font-semibold text-slate-300 mb-2">Técnico *</label>
+            <Field label="Técnico *" className="md:col-span-2">
               <select
+                name="tecnico_id"
                 value={tecnicoId}
                 onChange={e => setTecnicoId(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl bg-[#1e293b] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500"
@@ -107,11 +109,11 @@ function AtribuicaoModal({ atribuicao, ferramentas, tecnicos, atribuicoes, onClo
                 <option value="">-- Selecione o Técnico --</option>
                 {tecnicos.map(t => <option key={t.id} value={t.id}>{t.nome}</option>)}
               </select>
-            </div>
+            </Field>
 
-            <div className="md:col-span-2">
-              <label className="block text-sm font-semibold text-slate-300 mb-2">Ferramenta *</label>
+            <Field label="Ferramenta *" className="md:col-span-2">
               <select
+                name="ferramenta_id"
                 value={ferramentaId}
                 onChange={e => setFerramentaId(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl bg-[#1e293b] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500"
@@ -124,52 +126,55 @@ function AtribuicaoModal({ atribuicao, ferramentas, tecnicos, atribuicoes, onClo
                   </option>
                 ))}
               </select>
-            </div>
+            </Field>
 
 
 
-            <div>
-              <label className="block text-sm font-semibold text-slate-300 mb-2">Estado da Ferramenta *</label>
+            <Field label="Estado da Ferramenta *">
               <select
+                name="estado"
                 value={estado}
                 onChange={e => setEstado(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl bg-[#1e293b] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500"
               >
                 {ESTADOS.map(est => <option key={est} value={est}>{est}</option>)}
               </select>
-            </div>
+            </Field>
 
-            <div>
-              <label className="block text-sm font-semibold text-slate-300 mb-2">Data da Atribuição *</label>
+            <Field label="Data da Atribuição *">
               <input
+                name="data_atribuicao"
+                autoComplete="off"
                 type="date"
                 value={dataAtribuicao}
                 onChange={e => setDataAtribuicao(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl bg-[#1e293b] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500"
                 required
               />
-            </div>
+            </Field>
 
-            <div>
-              <label className="block text-sm font-semibold text-slate-300 mb-2">Data da Verificação (Opcional)</label>
+            <Field label="Data da Verificação (Opcional)">
               <input
+                name="data_verificacao"
+                autoComplete="off"
                 type="date"
                 value={dataVerificacao}
                 onChange={e => setDataVerificacao(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl bg-[#1e293b] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500"
               />
-            </div>
+            </Field>
 
-            <div className="md:col-span-2">
-              <label className="block text-sm font-semibold text-slate-300 mb-2">Observação (Opcional)</label>
+            <Field label="Observação (Opcional)" className="md:col-span-2">
               <textarea
+                name="observacao_verificacao"
+                autoComplete="off"
                 value={observacaoVerificacao}
                 onChange={e => setObservacaoVerificacao(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl bg-[#1e293b] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500"
                 rows={2}
                 placeholder="Ex: Alicate entregue em estado de novo"
               />
-            </div>
+            </Field>
 
           </div>
           <div className="pt-4 flex justify-end gap-3 border-t border-[#1e3a5f]">
@@ -177,12 +182,11 @@ function AtribuicaoModal({ atribuicao, ferramentas, tecnicos, atribuicoes, onClo
               Cancelar
             </button>
             <button type="submit" disabled={loading} className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold transition-all disabled:opacity-50 flex items-center justify-center">
-              {loading ? <Loader2 size={20} className="animate-spin" /> : 'Salvar'}
+              {loading ? <Loader2 size={20} className="animate-spin" aria-hidden="true" /> : 'Salvar'}
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </Modal>
   )
 }
 
@@ -221,19 +225,20 @@ function TransferModal({ atribuicao, tecnicos, onClose, onUpdate }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="bg-[#111827] border border-[#1e3a5f] rounded-2xl w-full max-w-lg shadow-2xl">
-        <div className="flex items-center justify-between p-6 border-b border-[#1e3a5f]">
-          <h3 className="text-xl font-bold text-white flex items-center gap-2">
-            <ArrowRightLeft className="text-blue-500" />
-            Transferir Ferramenta
-          </h3>
-          <button onClick={onClose} className="text-slate-500 hover:text-white"><X size={20} /></button>
-        </div>
-        <form onSubmit={handleTransfer} className="p-6 space-y-4">
-          <div>
-            <label className="block text-sm font-semibold text-slate-300 mb-2">Transferir para o Técnico *</label>
+    <Modal
+      isOpen
+      onClose={onClose}
+      title={
+        <span className="flex items-center gap-2">
+          <ArrowRightLeft className="text-blue-500" aria-hidden="true" />
+          Transferir Ferramenta
+        </span>
+      }
+    >
+        <form onSubmit={handleTransfer} className="space-y-4">
+          <Field label="Transferir para o Técnico *">
             <select
+              name="novo_tecnico_id"
               value={novoTecnicoId}
               onChange={e => setNovoTecnicoId(e.target.value)}
               className="w-full px-4 py-3 rounded-xl bg-[#1e293b] border border-[#1e3a5f] text-white focus:outline-none"
@@ -244,26 +249,26 @@ function TransferModal({ atribuicao, tecnicos, onClose, onUpdate }) {
                 <option key={t.id} value={t.id}>{t.nome}</option>
               ))}
             </select>
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-slate-300 mb-2">Observação (Opcional)</label>
+          </Field>
+          <Field label="Observação (Opcional)">
             <input
+              name="obs"
+              autoComplete="off"
               type="text"
               value={obs}
               onChange={e => setObs(e.target.value)}
               placeholder="Ex: Empréstimo rápido para a obra X"
               className="w-full px-4 py-3 rounded-xl bg-[#1e293b] border border-[#1e3a5f] text-white focus:outline-none"
             />
-          </div>
+          </Field>
           <div className="pt-4 flex justify-end gap-3">
             <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg font-semibold text-slate-400">Cancelar</button>
             <button type="submit" disabled={loading} className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold flex items-center gap-2">
-              {loading && <Loader2 size={16} className="animate-spin" />} Transferir
+              {loading && <Loader2 size={16} className="animate-spin" aria-hidden="true" />} Transferir
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </Modal>
   )
 }
 
@@ -333,7 +338,7 @@ export function AtribuicaoFerramentasAdmin() {
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-black text-white flex items-center gap-3">
-            <ArrowRightLeft className="text-blue-500" size={32} />
+            <ArrowRightLeft className="text-blue-500" size={32} aria-hidden="true" />
             Atribuição de Ferramentas
           </h1>
           <p className="text-slate-500 mt-2">Controle de quem está com quais ferramentas.</p>
@@ -343,13 +348,13 @@ export function AtribuicaoFerramentasAdmin() {
           onClick={() => { setEditItem(null); setModalOpen(true) }}
           className="w-full md:w-auto bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-500/20"
         >
-          <Plus size={20} /> Nova Atribuição
+          <Plus size={20} aria-hidden="true" /> Nova Atribuição
         </button>
       </div>
 
       {loading ? (
         <div className="p-12 text-center text-slate-500 flex justify-center gap-3 items-center">
-          <Loader2 className="animate-spin" size={24} /> Carregando atribuições...
+          <Loader2 className="animate-spin" size={24} aria-hidden="true" /> Carregando atribuições...
         </div>
       ) : (
         <DataTable
@@ -421,14 +426,14 @@ export function AtribuicaoFerramentasAdmin() {
                     className="p-2 text-slate-400 hover:text-green-400 transition-colors bg-[#0f172a] rounded-lg border border-[#1e3a5f]/50 hover:border-green-500/30"
                     title="Devolver ao Estoque" aria-label="Devolver ao Estoque"
                   >
-                    <ArchiveRestore size={16} />
+                    <ArchiveRestore size={16} aria-hidden="true" />
                   </button>
                   <button 
                     onClick={() => { setEditItem(a); setTransferModalOpen(true) }}
                     className="p-2 text-slate-400 hover:text-orange-400 transition-colors bg-[#0f172a] rounded-lg border border-[#1e3a5f]/50 hover:border-orange-500/30"
                     title="Transferir para outro Técnico" aria-label="Transferir para outro Técnico"
                   >
-                    <ArrowRightLeft size={16} />
+                    <ArrowRightLeft size={16} aria-hidden="true" />
                   </button>
                 </div>
               )

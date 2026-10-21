@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
-import { Loader2, Plus, PenTool, Edit, Trash2, X, History } from 'lucide-react'
+import { Loader2, Plus, PenTool, Edit, Trash2, History } from 'lucide-react'
 import { DataTable } from '../../components/ui/DataTable'
+import { Modal } from '../../components/ui/Modal'
+import { Field } from '../../components/ui/Field'
 
 function FerramentaModal({ ferramenta, tipos, onClose, onUpdate }) {
   const isEditing = !!ferramenta
@@ -64,23 +66,23 @@ function FerramentaModal({ ferramenta, tipos, onClose, onUpdate }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="bg-[#111827] border border-[#1e3a5f] rounded-2xl w-full max-w-2xl shadow-2xl flex flex-col max-h-[90vh]">
-        <div className="flex items-center justify-between p-6 border-b border-[#1e3a5f] shrink-0">
-          <h3 className="text-xl font-bold text-white flex items-center gap-2">
-            <PenTool className="text-blue-500" />
-            {isEditing ? 'Editar Ferramenta' : 'Nova Ferramenta'}
-          </h3>
-          <button onClick={onClose} className="text-slate-500 hover:text-white p-2 rounded-lg transition-colors">
-            <X size={20} />
-          </button>
-        </div>
-        
-        <form onSubmit={handleSave} className="p-6 overflow-y-auto space-y-6">
+    <Modal
+      isOpen
+      onClose={onClose}
+      maxWidth="max-w-2xl"
+      title={
+        <span className="flex items-center gap-2">
+          <PenTool className="text-blue-500" aria-hidden="true" />
+          {isEditing ? 'Editar Ferramenta' : 'Nova Ferramenta'}
+        </span>
+      }
+    >
+        <form onSubmit={handleSave} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
-              <label className="block text-sm font-semibold text-slate-300 mb-2">Tipo de Ferramenta (Modelo) *</label>
+              <Field label="Tipo de Ferramenta (Modelo) *">
               <select
+                name="tipo_id"
                 value={tipoId}
                 onChange={e => setTipoId(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl bg-[#1e293b] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500"
@@ -91,50 +93,57 @@ function FerramentaModal({ ferramenta, tipos, onClose, onUpdate }) {
                   <option key={t.id} value={t.id}>{t.nome} - {t.categoria}</option>
                 ))}
               </select>
+              </Field>
               <p className="text-xs text-slate-500 mt-1">Crie novos modelos na tela de "Tipos de Ferramenta"</p>
             </div>
 
-            <div>
-              <label className="block text-sm font-semibold text-slate-300 mb-2">Estado *</label>
+            <Field label="Estado *">
               <select
+                name="estado"
                 value={estado}
                 onChange={e => setEstado(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl bg-[#1e293b] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500"
               >
                 {ESTADOS.map(est => <option key={est} value={est}>{est}</option>)}
               </select>
-            </div>
+            </Field>
 
-            <div>
-              <label className="block text-sm font-semibold text-slate-300 mb-2">Identificador (Nº Série/Patrimônio)</label>
+            <Field label="Identificador (Nº Série/Patrimônio)">
               <input
                 type="text"
+                name="identificador"
+                autoComplete="off"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
                 value={identificador}
                 onChange={e => setIdentificador(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl bg-[#1e293b] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500"
                 placeholder="Ex: ALI-001"
               />
-            </div>
+            </Field>
 
-            <div>
-              <label className="block text-sm font-semibold text-slate-300 mb-2">Cidade</label>
+            <Field label="Cidade">
               <input
                 type="text"
+                name="cidade"
+                autoComplete="off"
                 value={cidade}
                 onChange={e => setCidade(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl bg-[#1e293b] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500"
               />
-            </div>
+            </Field>
 
-            <div className="md:col-span-2">
-              <label className="block text-sm font-semibold text-slate-300 mb-2">Descrição</label>
+            <Field label="Descrição" className="md:col-span-2">
               <textarea
+                name="descricao"
+                autoComplete="off"
                 value={descricao}
                 onChange={e => setDescricao(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl bg-[#1e293b] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500"
                 rows={2}
               />
-            </div>
+            </Field>
           </div>
 
           <div className="pt-6 mt-6 border-t border-[#1e3a5f] flex justify-end gap-3 shrink-0">
@@ -142,12 +151,11 @@ function FerramentaModal({ ferramenta, tipos, onClose, onUpdate }) {
               Cancelar
             </button>
             <button type="submit" disabled={loading} className="px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold transition-all disabled:opacity-50 flex items-center justify-center">
-              {loading ? <Loader2 size={20} className="animate-spin" /> : 'Salvar Ferramenta'}
+              {loading ? <Loader2 size={20} className="animate-spin" aria-hidden="true" /> : 'Salvar Ferramenta'}
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </Modal>
   )
 }
 
@@ -173,27 +181,24 @@ function HistoricoModal({ ferramenta, onClose }) {
   }, [ferramenta])
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="bg-[#111827] border border-[#1e3a5f] rounded-2xl w-full max-w-3xl shadow-2xl flex flex-col max-h-[90vh]">
-        <div className="flex items-center justify-between p-6 border-b border-[#1e3a5f] shrink-0">
-          <div>
-            <h3 className="text-xl font-bold text-white flex items-center gap-2">
-              <History className="text-blue-500" />
-              Histórico da Ferramenta
-            </h3>
-            <p className="text-sm text-slate-400 mt-1">
-              {ferramenta.identificador ? `[${ferramenta.identificador}] ` : ''}{ferramenta.nome}
-            </p>
-          </div>
-          <button onClick={onClose} className="text-slate-500 hover:text-white p-2 rounded-lg transition-colors">
-            <X size={20} />
-          </button>
-        </div>
-        
-        <div className="p-6 overflow-y-auto space-y-4">
+    <Modal
+      isOpen
+      onClose={onClose}
+      maxWidth="max-w-3xl"
+      title={
+        <span className="flex items-center gap-2">
+          <History className="text-blue-500" aria-hidden="true" />
+          Histórico da Ferramenta
+        </span>
+      }
+    >
+      <p className="text-sm text-slate-400 mb-4">
+        {ferramenta.identificador ? `[${ferramenta.identificador}] ` : ''}{ferramenta.nome}
+      </p>
+        <div className="space-y-4">
           {loading ? (
             <div className="text-center text-slate-500 py-8 flex justify-center gap-2">
-              <Loader2 className="animate-spin" /> Carregando histórico...
+              <Loader2 className="animate-spin" aria-hidden="true" /> Carregando histórico…
             </div>
           ) : historico.length === 0 ? (
             <div className="text-center text-slate-500 py-8">
@@ -241,8 +246,7 @@ function HistoricoModal({ ferramenta, onClose }) {
             </div>
           )}
         </div>
-      </div>
-    </div>
+    </Modal>
   )
 }
 
@@ -289,7 +293,7 @@ export function FerramentasAdmin() {
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-black text-white flex items-center gap-3">
-            <PenTool className="text-blue-500" size={32} />
+            <PenTool className="text-blue-500" size={32} aria-hidden="true" />
             Ferramentas
           </h1>
           <p className="text-slate-500 mt-2">Catálogo de ferramentas, categorias e estoque total.</p>
@@ -299,13 +303,13 @@ export function FerramentasAdmin() {
           onClick={() => { setEditItem(null); setModalOpen(true) }}
           className="w-full md:w-auto bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-500/20"
         >
-          <Plus size={20} /> Nova Ferramenta
+          <Plus size={20} aria-hidden="true" /> Nova Ferramenta
         </button>
       </div>
 
       {loading ? (
         <div className="p-12 text-center text-slate-500 flex justify-center gap-3 items-center">
-          <Loader2 className="animate-spin" size={24} /> Carregando ferramentas...
+          <Loader2 className="animate-spin" size={24} aria-hidden="true" /> Carregando ferramentas...
         </div>
       ) : (
         <DataTable
@@ -361,21 +365,21 @@ export function FerramentasAdmin() {
                     className="p-2 text-slate-400 hover:text-purple-400 transition-colors bg-[#0f172a] rounded-lg border border-[#1e3a5f]/50 hover:border-purple-500/30"
                     title="Ver Histórico" aria-label="Ver Histórico"
                   >
-                    <History size={16} />
+                    <History size={16} aria-hidden="true" />
                   </button>
                   <button 
                     onClick={() => { setEditItem(f); setModalOpen(true) }}
                     className="p-2 text-slate-400 hover:text-blue-400 transition-colors bg-[#0f172a] rounded-lg border border-[#1e3a5f]/50 hover:border-blue-500/30"
                     title="Editar" aria-label="Editar"
                   >
-                    <Edit size={16} />
+                    <Edit size={16} aria-hidden="true" />
                   </button>
                   <button 
                     onClick={() => handleDelete(f.id)} 
                     className="p-2 text-slate-500 hover:text-red-400 transition-colors bg-[#0f172a] rounded-lg border border-[#1e3a5f]/50 hover:border-red-500/30"
                     title="Excluir" aria-label="Excluir"
                   >
-                    <Trash2 size={16} />
+                    <Trash2 size={16} aria-hidden="true" />
                   </button>
                 </div>
               )

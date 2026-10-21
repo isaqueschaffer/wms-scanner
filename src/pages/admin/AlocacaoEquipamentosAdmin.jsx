@@ -1,7 +1,9 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useId, useState, useRef } from 'react'
 import { supabase } from '../../lib/supabase'
-import { Loader2, ArrowRightLeft, Search, Edit, Trash2, X } from 'lucide-react'
+import { Loader2, ArrowRightLeft, Search, Edit, Trash2 } from 'lucide-react'
 import { DataTable } from '../../components/ui/DataTable'
+import { Modal } from '../../components/ui/Modal'
+import { Field } from '../../components/ui/Field'
 
 function EditAlocacaoModal({ alocacao, tecnicos, onClose, onUpdate }) {
   const [tecnicoId, setTecnicoId] = useState(alocacao.tecnicos?.id || '')
@@ -44,25 +46,18 @@ function EditAlocacaoModal({ alocacao, tecnicos, onClose, onUpdate }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="bg-[#111827] border border-[#1e3a5f] rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden">
-        <div className="flex items-center justify-between p-6 border-b border-[#1e3a5f]">
-          <h3 className="text-xl font-bold text-white">Editar Alocação</h3>
-          <button onClick={onClose} className="text-slate-500 hover:text-white p-2 rounded-lg transition-colors">
-            <X size={20} />
-          </button>
-        </div>
-        <form onSubmit={handleSave} className="p-6 space-y-4">
+    <Modal isOpen onClose={onClose} title="Editar Alocação">
+        <form onSubmit={handleSave} className="space-y-4">
           <div>
-            <label className="block text-sm font-semibold text-slate-300 mb-2">Equipamento / Projeto</label>
+            <p className="block text-sm font-semibold text-slate-300 mb-2">Equipamento / Projeto</p>
             <div className="p-3 bg-[#1e293b] rounded-lg border border-[#1e3a5f] text-slate-400 text-sm">
               <span className="text-white font-bold">{alocacao.equipamentos?.produtos?.nome}</span> (S/N: {alocacao.equipamentos?.sn}) <br/>
               Projeto: {alocacao.equipamentos?.projetos?.nome}
             </div>
           </div>
-          <div>
-            <label className="block text-sm font-semibold text-slate-300 mb-2">Técnico</label>
+          <Field label="Técnico">
             <select
+              name="tecnico_id"
               value={tecnicoId}
               onChange={e => setTecnicoId(e.target.value)}
               className="w-full px-4 py-3 rounded-xl bg-[#1e293b] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500"
@@ -71,10 +66,10 @@ function EditAlocacaoModal({ alocacao, tecnicos, onClose, onUpdate }) {
               <option value="">-- Selecione --</option>
               {tecnicos.map(t => <option key={t.id} value={t.id}>{t.nome}</option>)}
             </select>
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-slate-300 mb-2">Tarefa</label>
+          </Field>
+          <Field label="Tarefa">
             <select
+              name="task_id"
               value={taskId}
               onChange={e => setTaskId(e.target.value)}
               className="w-full px-4 py-3 rounded-xl bg-[#1e293b] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500"
@@ -82,31 +77,32 @@ function EditAlocacaoModal({ alocacao, tecnicos, onClose, onUpdate }) {
               <option value="">Nenhuma</option>
               {projTasks.map(t => <option key={t.id} value={t.id}>{t.titulo}</option>)}
             </select>
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-slate-300 mb-2">Observação</label>
+          </Field>
+          <Field label="Observação">
             <textarea
+              name="observacao"
+              autoComplete="off"
               value={observacao}
               onChange={e => setObservacao(e.target.value)}
               className="w-full px-4 py-3 rounded-xl bg-[#1e293b] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500"
               rows={3}
             />
-          </div>
+          </Field>
           <div className="pt-4 flex justify-end gap-3">
             <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg font-semibold text-slate-400 hover:text-white hover:bg-[#1e3a5f]/50 transition-colors">
               Cancelar
             </button>
             <button type="submit" disabled={loading} className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold transition-all disabled:opacity-50 flex items-center justify-center">
-              {loading ? <Loader2 size={20} className="animate-spin" /> : 'Salvar'}
+              {loading ? <Loader2 size={20} className="animate-spin" aria-hidden="true" /> : 'Salvar'}
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </Modal>
   )
 }
 
 export function AlocacaoEquipamentosAdmin() {
+  const snId = useId()
   const [projetos, setProjetos] = useState([])
   const [tecnicos, setTecnicos] = useState([])
   
@@ -231,7 +227,7 @@ export function AlocacaoEquipamentosAdmin() {
       <div className="max-w-3xl mx-auto">
         <div className="mb-8">
           <h1 className="text-2xl font-black text-white flex items-center gap-3">
-            <ArrowRightLeft className="text-blue-500" />
+            <ArrowRightLeft className="text-blue-500" aria-hidden="true" />
             Alocação de Equipamentos
           </h1>
           <p className="text-sm text-slate-500 mt-1">Registre a entrega de equipamentos para os técnicos em campo</p>
@@ -240,9 +236,9 @@ export function AlocacaoEquipamentosAdmin() {
         <div className="bg-[#0f172a] border border-[#1e3a5f] rounded-2xl p-6 md:p-8 shadow-xl">
           <form onSubmit={handleAllocate} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-semibold text-slate-300 mb-2">1. Selecione o Projeto</label>
+              <Field label="1. Selecione o Projeto">
                 <select
+                  name="selected_projeto"
                   value={selectedProjeto}
                   onChange={e => setSelectedProjeto(e.target.value)}
                   className="w-full px-4 py-3 rounded-xl bg-[#1e293b] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500"
@@ -250,11 +246,11 @@ export function AlocacaoEquipamentosAdmin() {
                   <option value="">-- Escolha um Projeto --</option>
                   {projetos.map(p => <option key={p.id} value={p.id}>{p.nome} ({p.clientes?.nome})</option>)}
                 </select>
-              </div>
+              </Field>
 
-              <div>
-                <label className="block text-sm font-semibold text-slate-300 mb-2">2. Selecione o Técnico</label>
+              <Field label="2. Selecione o Técnico">
                 <select
+                  name="selected_tecnico"
                   value={selectedTecnico}
                   onChange={e => setSelectedTecnico(e.target.value)}
                   className="w-full px-4 py-3 rounded-xl bg-[#1e293b] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500"
@@ -262,12 +258,13 @@ export function AlocacaoEquipamentosAdmin() {
                   <option value="">-- Escolha o Técnico --</option>
                   {tecnicos.map(t => <option key={t.id} value={t.id}>{t.nome}</option>)}
                 </select>
-              </div>
+              </Field>
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-slate-300 mb-2">3. Tarefa (Opcional)</label>
+              <Field label="3. Tarefa (Opcional)">
               <select
+                name="task_id"
                 value={selectedTask}
                 onChange={e => setSelectedTask(e.target.value)}
                 disabled={!selectedProjeto || tasks.length === 0}
@@ -276,20 +273,27 @@ export function AlocacaoEquipamentosAdmin() {
                 <option value="">Nenhuma / Não especificada</option>
                 {tasks.map(t => <option key={t.id} value={t.id}>{t.titulo}</option>)}
               </select>
+              </Field>
               <p className="text-xs text-slate-500 mt-1">Você pode vincular esta saída de equipamento a uma task específica do Kanban.</p>
             </div>
 
             <div className="pt-4 border-t border-[#1e3a5f]">
-              <label className="block text-sm font-semibold text-slate-300 mb-2">4. Bipar Equipamento (Serial Number)</label>
+              <label htmlFor={snId} className="block text-sm font-semibold text-slate-300 mb-2">4. Bipar Equipamento (Serial Number)</label>
               <div className="flex gap-3">
                 <div className="relative flex-1">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} aria-hidden="true" />
                   <input
+                    id={snId}
                     ref={snInputRef}
                     type="text"
+                    name="sn"
+                    autoComplete="off"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
                     value={sn}
                     onChange={e => setSn(e.target.value)}
-                    placeholder="Escaneie o código de barras ou digite o SN..."
+                    placeholder="Escaneie o código de barras ou digite o SN…"
                     className="w-full pl-12 pr-4 py-4 rounded-xl bg-[#1e293b] border-2 border-[#1e3a5f] focus:border-blue-500 text-white font-mono uppercase focus:outline-none transition-colors"
                   />
                 </div>
@@ -298,7 +302,7 @@ export function AlocacaoEquipamentosAdmin() {
                   disabled={loading || !sn.trim() || !selectedProjeto || !selectedTecnico}
                   className="px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[140px] shadow-lg shadow-blue-600/20"
                 >
-                  {loading ? <Loader2 size={24} className="animate-spin" /> : 'Alocar'}
+                  {loading ? <Loader2 size={24} className="animate-spin" aria-hidden="true" /> : 'Alocar'}
                 </button>
               </div>
             </div>
@@ -318,7 +322,7 @@ export function AlocacaoEquipamentosAdmin() {
         
         {loadingAlocacoes ? (
           <div className="p-8 text-center text-slate-500 flex justify-center gap-2">
-            <Loader2 className="animate-spin" /> Carregando histórico...
+            <Loader2 className="animate-spin" aria-hidden="true" /> Carregando histórico…
           </div>
         ) : (
           <DataTable
@@ -339,7 +343,7 @@ export function AlocacaoEquipamentosAdmin() {
                 key: 'data_alocacao', 
                 label: 'Data/Hora', 
                 tdClassName: 'text-sm text-slate-400 tabular-nums whitespace-nowrap',
-                render: (aloc) => new Date(aloc.data_alocacao).toLocaleString() 
+                render: (aloc) => new Date(aloc.data_alocacao).toLocaleString('pt-BR') 
               },
               { 
                 key: 'projeto', 
@@ -377,14 +381,14 @@ export function AlocacaoEquipamentosAdmin() {
                       className="p-2 text-slate-400 hover:text-blue-400 transition-colors bg-[#0f172a] rounded-lg border border-[#1e3a5f]/50 hover:border-blue-500/30"
                       title="Editar alocação" aria-label="Editar alocação"
                     >
-                      <Edit size={16} />
+                      <Edit size={16} aria-hidden="true" />
                     </button>
                     <button 
                       onClick={() => handleDeleteAlocacao(aloc.id)} 
                       className="p-2 text-slate-500 hover:text-red-400 transition-colors bg-[#0f172a] rounded-lg border border-[#1e3a5f]/50 hover:border-red-500/30"
                       title="Excluir registro" aria-label="Excluir registro"
                     >
-                      <Trash2 size={16} />
+                      <Trash2 size={16} aria-hidden="true" />
                     </button>
                   </div>
                 )

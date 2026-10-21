@@ -3,7 +3,7 @@ import { X } from 'lucide-react'
 
 const FOCAVEIS = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
 
-export function Modal({ isOpen, onClose, title, children }) {
+export function Modal({ isOpen, onClose, title, children, maxWidth = 'max-w-lg' }) {
   const titleId = useId()
   const dialogRef = useRef(null)
   const onCloseRef = useRef(onClose)
@@ -66,7 +66,7 @@ export function Modal({ isOpen, onClose, title, children }) {
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className="bg-[#111827] border border-[#1e3a5f] rounded-2xl shadow-2xl w-full max-w-lg flex flex-col max-h-[90vh] outline-none"
+        className={`bg-[#111827] border border-[#1e3a5f] rounded-2xl shadow-2xl w-full ${maxWidth} flex flex-col max-h-[90vh] outline-none`}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#1e3a5f] shrink-0">

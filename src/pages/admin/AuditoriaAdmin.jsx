@@ -47,7 +47,7 @@ export function AuditoriaAdmin() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-black text-white tracking-tight flex items-center gap-3">
-            <ShieldAlert className="text-emerald-400" />
+            <ShieldAlert className="text-emerald-400" aria-hidden="true" />
             Auditoria de Sistema
           </h1>
           <p className="text-slate-400 mt-2">
@@ -59,7 +59,7 @@ export function AuditoriaAdmin() {
       <div className="mt-8">
         {loading ? (
           <div className="p-12 text-center text-slate-500 flex justify-center gap-2 font-semibold">
-            <Loader2 className="animate-spin" /> Carregando logs de auditoria...
+            <Loader2 className="animate-spin" aria-hidden="true" /> Carregando logs de auditoria...
           </div>
         ) : (
           <DataTable
@@ -99,7 +99,7 @@ export function AuditoriaAdmin() {
                 tdClassName: 'text-sm text-slate-300 font-medium',
                 render: (log) => (
                   <div className="flex items-center gap-2">
-                    <Database size={14} className="text-slate-500" />
+                    <Database size={14} className="text-slate-500" aria-hidden="true" />
                     {TABLE_NAMES[log.tabela] || log.tabela}
                   </div>
                 )
@@ -119,7 +119,7 @@ export function AuditoriaAdmin() {
                     className="p-2 text-slate-400 hover:text-blue-400 transition-colors bg-[#0f172a] rounded-lg border border-[#1e3a5f]/50 hover:border-blue-500/30" 
                     title="Ver Detalhes" aria-label="Ver Detalhes"
                   >
-                    <Eye size={16} />
+                    <Eye size={16} aria-hidden="true" />
                   </button>
                 )
               }
@@ -158,7 +158,7 @@ export function AuditoriaAdmin() {
 
             <div className="space-y-4">
               <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                <FileJson size={16} className="text-blue-500" /> Detalhes dos Dados
+                <FileJson size={16} className="text-blue-500" aria-hidden="true" /> Detalhes dos Dados
               </h3>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

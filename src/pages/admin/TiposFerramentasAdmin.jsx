@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
-import { Loader2, Plus, PenTool, Edit, Trash2, X } from 'lucide-react'
+import { Loader2, Plus, PenTool, Edit, Trash2 } from 'lucide-react'
 import { DataTable } from '../../components/ui/DataTable'
+import { Modal } from '../../components/ui/Modal'
+import { Field } from '../../components/ui/Field'
 
 function TipoModal({ tipo, onClose, onUpdate }) {
   const isEditing = !!tipo
@@ -43,62 +45,61 @@ function TipoModal({ tipo, onClose, onUpdate }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="bg-[#111827] border border-[#1e3a5f] rounded-2xl w-full max-w-lg shadow-2xl flex flex-col">
-        <div className="flex items-center justify-between p-6 border-b border-[#1e3a5f]">
-          <h3 className="text-xl font-bold text-white flex items-center gap-2">
-            <PenTool className="text-blue-500" />
-            {isEditing ? 'Editar Tipo' : 'Novo Tipo de Ferramenta'}
-          </h3>
-          <button onClick={onClose} className="text-slate-500 hover:text-white transition-colors">
-            <X size={20} />
-          </button>
-        </div>
-        
-        <form onSubmit={handleSave} className="p-6 space-y-4">
-          <div>
-            <label className="block text-sm font-semibold text-slate-300 mb-2">Nome do Modelo/Tipo *</label>
+    <Modal
+      isOpen
+      onClose={onClose}
+      title={
+        <span className="flex items-center gap-2">
+          <PenTool className="text-blue-500" aria-hidden="true" />
+          {isEditing ? 'Editar Tipo' : 'Novo Tipo de Ferramenta'}
+        </span>
+      }
+    >
+        <form onSubmit={handleSave} className="space-y-4">
+          <Field label="Nome do Modelo/Tipo *">
             <input
               type="text"
+              name="nome"
+              autoComplete="off"
               value={nome}
               onChange={e => setNome(e.target.value)}
               className="w-full px-4 py-3 rounded-xl bg-[#1e293b] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500"
               required
               placeholder="Ex: Alicate de Crimpar"
             />
-          </div>
+          </Field>
 
-          <div>
-            <label className="block text-sm font-semibold text-slate-300 mb-2">Categoria *</label>
+          <Field label="Categoria *">
             <select
+              name="categoria"
               value={categoria}
               onChange={e => setCategoria(e.target.value)}
               className="w-full px-4 py-3 rounded-xl bg-[#1e293b] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500"
             >
               {CATEGORIAS.map(cat => <option key={cat} value={cat}>{cat}</option>)}
             </select>
-          </div>
+          </Field>
 
-          <div>
-            <label className="block text-sm font-semibold text-slate-300 mb-2">Descrição Padrão</label>
+          <Field label="Descrição Padrão">
             <textarea
+              name="descricao"
+              autoComplete="off"
               value={descricao}
               onChange={e => setDescricao(e.target.value)}
               className="w-full px-4 py-3 rounded-xl bg-[#1e293b] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500"
               rows={3}
             />
-          </div>
+          </Field>
 
           <div className="pt-4 flex justify-end gap-3">
             <button type="button" onClick={onClose} className="px-6 py-2 rounded-lg text-slate-400 hover:text-white">Cancelar</button>
             <button type="submit" disabled={loading} className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold flex items-center gap-2">
-              {loading && <Loader2 size={16} className="animate-spin" />}
+              {loading && <Loader2 size={16} className="animate-spin" aria-hidden="true" />}
               Salvar
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </Modal>
   )
 }
 
@@ -145,7 +146,7 @@ export function TiposFerramentasAdmin() {
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-black text-white flex items-center gap-3">
-            <PenTool className="text-blue-500" size={32} />
+            <PenTool className="text-blue-500" size={32} aria-hidden="true" />
             Tipos de Ferramenta
           </h1>
           <p className="text-slate-500 mt-2">Cadastre os modelos base para facilitar a adição no estoque.</p>
@@ -155,12 +156,12 @@ export function TiposFerramentasAdmin() {
           onClick={() => { setEditItem(null); setModalOpen(true) }}
           className="w-full md:w-auto bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-bold flex items-center justify-center gap-2"
         >
-          <Plus size={20} /> Novo Tipo
+          <Plus size={20} aria-hidden="true" /> Novo Tipo
         </button>
       </div>
 
       {loading ? (
-        <div className="p-12 text-center text-slate-500"><Loader2 className="animate-spin inline mr-2" /> Carregando...</div>
+        <div className="p-12 text-center text-slate-500"><Loader2 className="animate-spin inline mr-2" aria-hidden="true" /> Carregando…</div>
       ) : (
         <DataTable
           data={tipos}
@@ -171,7 +172,7 @@ export function TiposFerramentasAdmin() {
           columns={[
             { key: 'nome', label: 'Nome do Modelo', tdClassName: 'text-white font-bold' },
             { key: 'categoria', label: 'Categoria', tdClassName: 'text-slate-300' },
-            { key: 'quantidade', label: 'Em Estoque', render: (t) => <span className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-lg font-bold">{t.quantidade} un</span> },
+            { key: 'quantidade', label: 'Em Estoque', render: (t) => <span className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-lg font-bold tabular-nums">{t.quantidade} un</span> },
             { key: 'descricao', label: 'Descrição', tdClassName: 'text-slate-500 text-sm' },
             {
               key: 'actions',
@@ -179,8 +180,8 @@ export function TiposFerramentasAdmin() {
               tdClassName: 'text-right',
               render: (t) => (
                 <div className="flex items-center justify-end gap-2">
-                  <button onClick={() => { setEditItem(t); setModalOpen(true) }} className="p-2 text-slate-400 hover:text-blue-400"><Edit size={16} /></button>
-                  <button onClick={() => handleDelete(t.id)} className="p-2 text-slate-400 hover:text-red-400"><Trash2 size={16} /></button>
+                  <button onClick={() => { setEditItem(t); setModalOpen(true) }} className="p-2 text-slate-400 hover:text-blue-400" title="Editar" aria-label="Editar"><Edit size={16} aria-hidden="true" /></button>
+                  <button onClick={() => handleDelete(t.id)} className="p-2 text-slate-400 hover:text-red-400" title="Excluir" aria-label="Excluir"><Trash2 size={16} aria-hidden="true" /></button>
                 </div>
               )
             }
