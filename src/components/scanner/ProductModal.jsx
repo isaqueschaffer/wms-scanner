@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Package, X, Loader2 } from 'lucide-react'
+import { Package, Loader2 } from 'lucide-react'
+import { Modal } from '../ui/Modal'
 
 /**
  * Modal para cadastrar um novo produto quando o EAN não existe no banco.
@@ -12,30 +13,23 @@ export function ProductModal({ ean, onConfirm, onClose, loading }) {
       e.preventDefault()
       onConfirm(name.trim())
     }
-    if (e.key === 'Escape') onClose()
   }
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-      <div className="bg-[#111827] border border-[#1e3a5f] rounded-2xl shadow-2xl w-full max-w-md p-6 mx-4">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-5">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-yellow-500/10 text-yellow-400">
-              <Package size={20} />
-            </div>
-            <div>
-              <h2 className="text-base font-bold text-white">Produto não encontrado</h2>
-              <p className="text-xs text-slate-400 mt-0.5">Cadastre o nome para este EAN</p>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            className="text-slate-500 hover:text-slate-300 transition-colors"
-          >
-            <X size={18} />
-          </button>
-        </div>
+    <Modal
+      isOpen
+      onClose={onClose}
+      maxWidth="max-w-md"
+      title={
+        <span className="flex items-center gap-3">
+          <span className="p-2 rounded-lg bg-yellow-500/10 text-yellow-400">
+            <Package size={20} aria-hidden="true" />
+          </span>
+          Produto não encontrado
+        </span>
+      }
+    >
+        <p className="text-xs text-slate-400 mb-4">Cadastre o nome para este EAN</p>
 
         {/* EAN badge */}
         <div className="mb-4 px-3 py-2 rounded-lg bg-slate-800 border border-slate-700">
@@ -44,17 +38,19 @@ export function ProductModal({ ean, onConfirm, onClose, loading }) {
         </div>
 
         {/* Input nome */}
-        <label className="block text-sm font-semibold text-slate-300 mb-2">
+        <label htmlFor="product-name-input" className="block text-sm font-semibold text-slate-300 mb-2">
           Nome do produto
         </label>
         <input
           id="product-name-input"
           autoFocus
           type="text"
+          name="nome_produto"
+          autoComplete="off"
           value={name}
           onChange={e => setName(e.target.value)}
           onKeyDown={handleKey}
-          placeholder="Ex: Bobina Fibra 48FO APC..."
+          placeholder="Ex: Bobina Fibra 48FO APC…"
           className="
             w-full px-4 py-3 rounded-xl bg-[#0f172a] border border-[#1e3a5f]
             text-white placeholder-slate-600 text-sm font-medium
@@ -63,7 +59,7 @@ export function ProductModal({ ean, onConfirm, onClose, loading }) {
           "
         />
 
-        <p className="text-xs text-slate-500 mt-2">Pressione Enter para confirmar ou Esc para cancelar</p>
+        <p className="text-xs text-slate-400 mt-2">Pressione Enter para confirmar ou Esc para cancelar</p>
 
         {/* Actions */}
         <div className="flex gap-3 mt-5">
@@ -78,11 +74,10 @@ export function ProductModal({ ean, onConfirm, onClose, loading }) {
             disabled={!name.trim() || loading}
             className="flex-1 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-bold hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
           >
-            {loading ? <Loader2 size={16} className="animate-spin" /> : null}
+            {loading ? <Loader2 size={16} className="animate-spin" aria-hidden="true" /> : null}
             Cadastrar
           </button>
         </div>
-      </div>
-    </div>
+    </Modal>
   )
 }

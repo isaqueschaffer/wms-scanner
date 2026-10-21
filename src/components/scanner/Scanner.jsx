@@ -8,12 +8,14 @@ import * as XLSX from 'xlsx'
 import { Link } from 'react-router-dom'
 import {
   Barcode, Hash, Package, Lock, Unlock, Download, List,
-  CheckCircle2, XCircle, RotateCcw, Loader2, Pencil, Trash2, Check, X,
+  CheckCircle2, RotateCcw, Loader2, Pencil, Trash2, Check, X,
 } from 'lucide-react'
 
 // ─── Constantes de fase ───────────────────────────────────────────────────────
 const PHASE = { EAN: 'ean', QTY: 'qty', SN: 'sn' }
 const HISTORY_LIMIT = 50
+// Botão só com ícone: área clicável de 40x40px mesmo com o ícone pequeno
+const BTN_ICONE = 'inline-flex items-center justify-center w-10 h-10 shrink-0 rounded-lg transition-all'
 
 // Mensagem de erro se o valor lido não pode ser um serial; null se estiver ok.
 function validarSn(sn, ean, eansConhecidos) {
@@ -506,8 +508,8 @@ export function Scanner({ session, onReset }) {
             "
           >
             {exporting
-              ? <Loader2 size={14} className="animate-spin" />
-              : <Download size={14} />}
+              ? <Loader2 size={14} className="animate-spin" aria-hidden="true" />
+              : <Download size={14} aria-hidden="true" />}
             Exportar XLSX
           </button>
           <button
@@ -519,7 +521,7 @@ export function Scanner({ session, onReset }) {
               hover:bg-slate-700/60 transition-all
             "
           >
-            <RotateCcw size={14} /> Finalizar Bipagem (F10)
+            <RotateCcw size={14} aria-hidden="true" /> Finalizar Bipagem (F10)
           </button>
         </div>
       </header>
@@ -537,7 +539,7 @@ export function Scanner({ session, onReset }) {
               /* ── Input EAN ── */
               <div>
                 <div className="flex items-center gap-2 mb-3">
-                  <Barcode size={16} className="text-blue-400" />
+                  <Barcode size={16} className="text-blue-400" aria-hidden="true" />
                   <p className="text-sm font-bold text-slate-300 uppercase tracking-widest">Leia o EAN da Caixa</p>
                 </div>
                 <input
@@ -563,7 +565,7 @@ export function Scanner({ session, onReset }) {
                 />
                 {processing && (
                   <div className="flex items-center gap-2 mt-2 text-slate-400 text-xs">
-                    <Loader2 size={12} className="animate-spin" /> Buscando produto...
+                    <Loader2 size={12} className="animate-spin" aria-hidden="true" /> Buscando produto…
                   </div>
                 )}
                 
@@ -596,7 +598,7 @@ export function Scanner({ session, onReset }) {
                 <div className="flex items-start justify-between">
                   <div>
                     <div className="flex items-center gap-2 mb-1">
-                      <Lock size={13} className="text-blue-400" />
+                      <Lock size={13} className="text-blue-400" aria-hidden="true" />
                       <p className="text-xs font-bold text-blue-400 uppercase tracking-widest">EAN Travado</p>
                     </div>
                     <p className="font-mono text-blue-300 text-sm tracking-widest">{lockedProduct?.ean}</p>
@@ -606,9 +608,9 @@ export function Scanner({ session, onReset }) {
                     id="btn-destravar-ean"
                     onClick={unlockEan}
                     title="Destravar (F2)" aria-label="Destravar (F2)"
-                    className="p-2 rounded-lg bg-slate-700/50 text-slate-400 hover:bg-slate-700 hover:text-white transition-all"
+                    className={`${BTN_ICONE} shrink-0 bg-slate-700/50 text-slate-400 hover:bg-slate-700 hover:text-white`}
                   >
-                    <Unlock size={16} />
+                    <Unlock size={16} aria-hidden="true" />
                   </button>
                 </div>
                 <p className="text-xs text-slate-500 mt-3">Pressione F2 para ler um novo EAN</p>
@@ -620,7 +622,7 @@ export function Scanner({ session, onReset }) {
           {phase === PHASE.QTY && (
             <div className="bg-[#111827] border border-yellow-600/40 rounded-2xl p-5">
               <div className="flex items-center gap-2 mb-3">
-                <Package size={16} className="text-yellow-400" />
+                <Package size={16} className="text-yellow-400" aria-hidden="true" />
                 <p className="text-sm font-bold text-yellow-300 uppercase tracking-widest">Quantidade Esperada da Caixa</p>
               </div>
               <input
@@ -628,6 +630,9 @@ export function Scanner({ session, onReset }) {
                 ref={qtyRef}
                 aria-label="Quantidade esperada da caixa"
                 type="number"
+                inputMode="numeric"
+                name="quantidade"
+                autoComplete="off"
                 min="1"
                 value={qtyValue}
                 onChange={e => setQtyValue(e.target.value)}
@@ -647,29 +652,38 @@ export function Scanner({ session, onReset }) {
           {/* Card SN — fase SN */}
           {phase === PHASE.SN && (
             <div className="bg-[#111827] border border-[#1e3a5f] rounded-2xl p-5">
-              <div className="flex items-center justify-between mb-3">
+              <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 mb-1">
                 <div className="flex items-center gap-2">
-                  <Hash size={16} className="text-green-400" />
+                  <Hash size={16} className="text-green-400" aria-hidden="true" />
                   <p className="text-sm font-bold text-slate-300 uppercase tracking-widest">Serial Number</p>
                 </div>
-                {padrao ? (
-                  <button
-                    type="button"
-                    onClick={resetarPadrao}
-                    title="Clique para redefinir o padrão (será reaprendido nos próximos 2 bipes)"
-                    className="text-xs text-green-400 hover:text-green-300 underline decoration-dotted"
-                  >
-                    Padrão: {descreverPadrao(padrao)}
-                  </button>
-                ) : (
-                  <span className="text-xs text-slate-600">Aprendendo padrão...</span>
-                )}
-                {pendingCount > 0 && (
-                  <div className="flex items-center gap-1 text-slate-500 text-xs">
-                    <Loader2 size={12} className="animate-spin" /> gravando{pendingCount > 1 ? ` (${pendingCount})` : ''}...
-                  </div>
-                )}
+                <div className="flex flex-wrap items-center justify-end gap-x-3">
+                  {padrao ? (
+                    <button
+                      type="button"
+                      onClick={resetarPadrao}
+                      title="Clique para redefinir o padrão (será reaprendido nos próximos 2 bipes)"
+                      className="text-xs text-green-400 hover:text-green-300 underline decoration-dotted py-2 -my-2"
+                    >
+                      Padrão: {descreverPadrao(padrao)}
+                    </button>
+                  ) : (
+                    <span className="text-xs text-slate-400">Aprendendo padrão…</span>
+                  )}
+                  <span aria-live="polite">
+                    {pendingCount > 0 && (
+                      <span className="flex items-center gap-1 text-slate-400 text-xs tabular-nums">
+                        <Loader2 size={12} className="animate-spin" aria-hidden="true" /> gravando{pendingCount > 1 ? ` (${pendingCount})` : ''}…
+                      </span>
+                    )}
+                  </span>
+                </div>
               </div>
+              <p className="text-xs text-slate-400 mb-3">
+                {padrao
+                  ? 'Toque no padrão para redefinir; ele será reaprendido nos próximos 2 bipes.'
+                  : 'O padrão do S/N é aprendido a partir dos 2 primeiros seriais.'}
+              </p>
               <input
                 id="input-sn"
                 ref={snRef}
@@ -710,7 +724,7 @@ export function Scanner({ session, onReset }) {
             </div>
             {expectedQty > 0 && (
               <>
-                <p className="text-slate-600 text-sm mt-1">de {expectedQty} esperados</p>
+                <p className="text-slate-400 text-sm mt-1 tabular-nums">de {expectedQty} esperados</p>
                 {/* Barra de progresso */}
                 <div
                   role="progressbar"
@@ -727,7 +741,7 @@ export function Scanner({ session, onReset }) {
                 </div>
                 {isComplete && (
                   <div className="mt-3 flex items-center justify-center gap-2 text-green-400 font-bold text-sm">
-                    <CheckCircle2 size={16} /> COMPLETO
+                    <CheckCircle2 size={16} aria-hidden="true" /> COMPLETO
                   </div>
                 )}
               </>
@@ -739,7 +753,7 @@ export function Scanner({ session, onReset }) {
             <div className="bg-[#111827] border border-green-800/40 rounded-2xl p-4">
               <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">Último Bipe</p>
               <p className="font-mono text-green-300 font-bold text-lg break-all leading-snug">{history[0].sn}</p>
-              <p className="text-slate-600 text-xs mt-1">{history[0].time}</p>
+              <p className="text-slate-400 text-xs mt-1 tabular-nums">{history[0].time}</p>
             </div>
           )}
 
@@ -747,7 +761,7 @@ export function Scanner({ session, onReset }) {
           {history.length > 0 && (
             <div className="bg-[#111827] border border-[#1e3a5f] rounded-2xl p-4 flex-1">
               <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">
-                Seriais Bipados ({history.length})
+                Seriais Bipados (<span className="tabular-nums">{history.length}</span>)
               </p>
               <ul className="space-y-1 max-h-[50vh] overflow-y-auto">
                 {history.map(h => (
@@ -756,6 +770,12 @@ export function Scanner({ session, onReset }) {
                       <>
                         <input
                           autoFocus
+                          name="sn_edicao"
+                          aria-label="Corrigir número de série"
+                          autoComplete="off"
+                          autoCapitalize="none"
+                          autoCorrect="off"
+                          spellCheck={false}
                           value={editing.value}
                           onChange={e => setEditing({ id: h.id, value: e.target.value })}
                           onKeyDown={e => {
@@ -763,27 +783,27 @@ export function Scanner({ session, onReset }) {
                             if (e.key === 'Escape') setEditing(null)
                           }}
                           disabled={editSaving}
-                          className="flex-1 min-w-0 bg-[#0f172a] border border-blue-500 rounded px-2 py-1 text-xs font-mono text-white focus:outline-none"
+                          className="flex-1 min-w-0 bg-[#0f172a] border border-blue-500 rounded px-2 py-2 text-xs font-mono text-white focus:outline-none"
                         />
-                        <button onClick={handleEditSave} disabled={editSaving} title="Salvar" aria-label="Salvar" className="p-1 text-emerald-400 hover:text-emerald-300">
-                          {editSaving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                        <button onClick={handleEditSave} disabled={editSaving} title="Salvar" aria-label="Salvar" className={`${BTN_ICONE} text-emerald-400 hover:text-emerald-300`}>
+                          {editSaving ? <Loader2 size={14} className="animate-spin" aria-hidden="true" /> : <Check size={14} aria-hidden="true" />}
                         </button>
-                        <button onClick={() => setEditing(null)} title="Cancelar" aria-label="Cancelar" className="p-1 text-slate-500 hover:text-white">
-                          <X size={14} />
+                        <button onClick={() => setEditing(null)} title="Cancelar" aria-label="Cancelar" className={`${BTN_ICONE} text-slate-400 hover:text-white`}>
+                          <X size={14} aria-hidden="true" />
                         </button>
                       </>
                     ) : (
                       <>
                         <div className="min-w-0">
                           <span className="font-mono text-slate-300 text-xs break-all">{h.sn}</span>
-                          <span className="text-slate-600 text-xs ml-2">{h.time}</span>
+                          <span className="text-slate-400 text-xs ml-2 tabular-nums">{h.time}</span>
                         </div>
                         <div className="flex items-center shrink-0">
-                          <button onClick={() => setEditing({ id: h.id, value: h.sn })} title="Editar S/N" aria-label="Editar S/N" className="p-1 text-slate-500 hover:text-blue-400">
-                            <Pencil size={14} />
+                          <button onClick={() => setEditing({ id: h.id, value: h.sn })} title="Editar S/N" aria-label="Editar S/N" className={`${BTN_ICONE} text-slate-400 hover:text-blue-400`}>
+                            <Pencil size={14} aria-hidden="true" />
                           </button>
-                          <button onClick={() => handleDeleteSn(h)} title="Excluir S/N" aria-label="Excluir S/N" className="p-1 text-slate-500 hover:text-red-400">
-                            <Trash2 size={14} />
+                          <button onClick={() => handleDeleteSn(h)} title="Excluir S/N" aria-label="Excluir S/N" className={`${BTN_ICONE} text-slate-400 hover:text-red-400`}>
+                            <Trash2 size={14} aria-hidden="true" />
                           </button>
                         </div>
                       </>

@@ -52,7 +52,7 @@ export function SetupScreen({ onStart }) {
         {/* Logo / Header */}
         <div className="text-center mb-10">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-600/20 border border-blue-500/30 mb-4">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-blue-400">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-blue-400" aria-hidden="true">
               <path d="M3 7l9-4 9 4v10l-9 4-9-4V7z"/>
               <path d="M12 3v18M3 7l9 4 9-4"/>
             </svg>
@@ -67,14 +67,14 @@ export function SetupScreen({ onStart }) {
 
           {loading ? (
             <div className="flex items-center justify-center py-8 text-slate-400 gap-2">
-              <Loader2 size={20} className="animate-spin" /> Carregando clientes...
+              <Loader2 size={20} className="animate-spin" aria-hidden="true" /> Carregando clientes…
             </div>
           ) : (
             <div className="space-y-5">
               {/* Cliente */}
               <div>
                 <label htmlFor="select-cliente" className="flex items-center gap-2 text-sm font-semibold text-slate-300 mb-2">
-                  <Users size={14} className="text-blue-400" /> Cliente
+                  <Users size={14} className="text-blue-400" aria-hidden="true" /> Cliente
                 </label>
                 <select
                   id="select-cliente"
@@ -97,7 +97,7 @@ export function SetupScreen({ onStart }) {
               {/* Projeto */}
               <div>
                 <label htmlFor="select-projeto" className="flex items-center gap-2 text-sm font-semibold text-slate-300 mb-2">
-                  <FolderOpen size={14} className="text-blue-400" /> Projeto
+                  <FolderOpen size={14} className="text-blue-400" aria-hidden="true" /> Projeto
                 </label>
                 <div className="relative">
                   <select
@@ -120,7 +120,7 @@ export function SetupScreen({ onStart }) {
                     ))}
                   </select>
                   {loadingProjects && (
-                    <Loader2 size={16} className="animate-spin absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                    <Loader2 size={16} className="animate-spin absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" aria-hidden="true" />
                   )}
                 </div>
               </div>
@@ -153,9 +153,6 @@ export function SetupScreen({ onStart }) {
         </div>
 
         <div className="flex items-center justify-between mt-6 px-2">
-          <p className="text-xs text-slate-600">
-            Supabase · React · Vite — v1.0
-          </p>
           <button
             onClick={() => supabase.auth.signOut()}
             className="text-xs font-semibold text-slate-500 hover:text-red-400 transition-colors flex items-center gap-1"
