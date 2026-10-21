@@ -18,6 +18,7 @@ export function ProdutosAdmin() {
   const [codigo, setCodigo] = useState('')
   const [unidade, setUnidade] = useState('UN')
   const [ncm, setNcm] = useState('')
+  const [controlaSn, setControlaSn] = useState(true)
   const [saving, setSaving] = useState(false)
 
   async function fetchProdutos() {
@@ -38,6 +39,7 @@ export function ProdutosAdmin() {
     setCodigo('')
     setUnidade('UN')
     setNcm('')
+    setControlaSn(true)
     setModalOpen(true)
   }
 
@@ -48,6 +50,7 @@ export function ProdutosAdmin() {
     setCodigo(p.codigo || '')
     setUnidade(p.unidade || 'UN')
     setNcm(p.ncm || '')
+    setControlaSn(p.controla_sn !== false)
     setModalOpen(true)
   }
 
@@ -66,6 +69,7 @@ export function ProdutosAdmin() {
       codigo: codigo.trim() || null,
       unidade,
       ncm: ncmLimpo || null,
+      controla_sn: controlaSn,
     }
 
     setSaving(true)
@@ -129,6 +133,13 @@ export function ProdutosAdmin() {
               { key: 'nome', label: 'Nome do Produto', render: (p) => <span className="font-semibold text-white">{p.nome}</span> },
               { key: 'codigo', label: 'Código', render: (p) => <span className="font-mono text-sm text-slate-300">{p.codigo || '—'}</span> },
               { key: 'unidade', label: 'Un.', tdClassName: 'text-sm text-slate-400' },
+              {
+                key: 'controla_sn',
+                label: 'S/N',
+                render: (p) => p.controla_sn === false
+                  ? <span className="text-xs font-bold text-amber-400">Por quantidade</span>
+                  : <span className="text-xs text-slate-500">Por serial</span>,
+              },
               { key: 'ncm', label: 'NCM', render: (p) => <span className="font-mono text-sm text-slate-400">{p.ncm || '—'}</span> },
               {
                 key: 'omie_codigo',
@@ -196,6 +207,13 @@ export function ProdutosAdmin() {
               <input type="text" inputMode="numeric" maxLength={10} value={ncm} onChange={e => setNcm(e.target.value)} className={`${inputClass} font-mono`} placeholder="8 dígitos" />
             </div>
           </div>
+          <label className="flex items-start gap-3 cursor-pointer select-none">
+            <input type="checkbox" checked={controlaSn} onChange={e => setControlaSn(e.target.checked)} className="mt-1 w-4 h-4 accent-blue-500" />
+            <span>
+              <span className="block text-sm font-semibold text-slate-300">Controla número de série (S/N)</span>
+              <span className="block text-xs text-slate-500">Desmarque para itens sem serial, como bobina de cabo: o projeto passa a registrar só a quantidade.</span>
+            </span>
+          </label>
           <div className="flex justify-end gap-3 pt-4">
             <button type="button" onClick={() => setModalOpen(false)} className="px-5 py-2.5 rounded-xl bg-slate-800 text-slate-300 font-semibold hover:bg-slate-700">Cancelar</button>
             <button type="submit" disabled={!ean.trim() || !nome.trim() || saving} className="px-5 py-2.5 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-500 flex items-center gap-2 disabled:opacity-50">

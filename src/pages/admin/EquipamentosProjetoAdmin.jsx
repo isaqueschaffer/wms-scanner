@@ -65,14 +65,20 @@ function EditablePatrimonio({ eq, onUpdate }) {
 function EquipamentoFormModal({ isOpen, onClose, projetoId, equipamento, produtos, onSaved }) {
   const [ean, setEan] = useState('')
   const [sn, setSn] = useState('')
+  const [quantidade, setQuantidade] = useState('1')
   const [patrimonio, setPatrimonio] = useState('')
   const [saving, setSaving] = useState(false)
   const [erro, setErro] = useState('')
+
+  // Produto sem S/N (ex.: bobina) é controlado só por quantidade
+  const produto = produtos.find(p => p.ean === ean)
+  const semSn = produto ? produto.controla_sn === false : false
 
   useEffect(() => {
     if (!isOpen) return
     setEan(equipamento?.ean || '')
     setSn(equipamento?.sn || '')
+    setQuantidade(String(equipamento?.quantidade || 1))
     setPatrimonio(equipamento?.n_patrimonio || '')
     setErro('')
   }, [isOpen, equipamento])
@@ -80,21 +86,45 @@ function EquipamentoFormModal({ isOpen, onClose, projetoId, equipamento, produto
   async function handleSubmit(e) {
     e.preventDefault()
     const snLimpo = sn.trim()
-    if (!ean || !snLimpo) {
-      setErro('Selecione o produto e informe o S/N.')
+    const qtd = parseInt(quantidade, 10)
+
+    if (!ean) {
+      setErro('Selecione o produto.')
+      return
+    }
+    if (semSn ? !qtd || qtd < 1 : !snLimpo) {
+      setErro(semSn ? 'Informe uma quantidade maior que zero.' : 'Informe o S/N.')
       return
     }
 
     setSaving(true)
     setErro('')
-    const payload = { ean, sn: snLimpo, n_patrimonio: patrimonio.trim() || null }
-    const { error } = equipamento
-      ? await supabase.from('equipamentos').update(payload).eq('id', equipamento.id)
-      : await supabase.from('equipamentos').insert({ ...payload, projeto_id: projetoId })
+    const patrimonioLimpo = patrimonio.trim() || null
+    let error
+    if (semSn && !equipamento) {
+      // Soma na linha que o projeto já tem para este produto
+      ;({ error } = await supabase.rpc('adicionar_equipamento_sem_sn', {
+        p_projeto_id: projetoId,
+        p_ean: ean,
+        p_quantidade: qtd,
+        p_patrimonio: patrimonioLimpo,
+      }))
+    } else {
+      const payload = semSn
+        ? { ean, sn: null, quantidade: qtd, n_patrimonio: patrimonioLimpo }
+        : { ean, sn: snLimpo, quantidade: 1, n_patrimonio: patrimonioLimpo }
+      ;({ error } = equipamento
+        ? await supabase.from('equipamentos').update(payload).eq('id', equipamento.id)
+        : await supabase.from('equipamentos').insert({ ...payload, projeto_id: projetoId }))
+    }
     setSaving(false)
 
     if (error) {
-      setErro(error.code === '23505' ? `O S/N "${snLimpo}" já existe neste projeto.` : error.message)
+      if (error.code === '23505') {
+        setErro(semSn ? 'Este produto já tem uma linha sem S/N neste projeto.' : `O S/N "${snLimpo}" já existe neste projeto.`)
+      } else {
+        setErro(error.message)
+      }
       return
     }
     onSaved()
@@ -116,10 +146,33 @@ function EquipamentoFormModal({ isOpen, onClose, projetoId, equipamento, produto
             ))}
           </select>
         </div>
-        <div>
-          <label className={labelClass}>S/N</label>
-          <input value={sn} onChange={e => setSn(e.target.value)} className={`${inputClass} font-mono`} placeholder="Número de série" />
-        </div>
+        {semSn ? (
+          <div>
+            <label className={labelClass}>Quantidade</label>
+            <input
+              type="number"
+              inputMode="numeric"
+              min={1}
+              step={1}
+              value={quantidade}
+              onChange={e => setQuantidade(e.target.value)}
+              className={`${inputClass} font-mono`}
+            />
+            <p className="text-xs text-slate-500 mt-1.5">
+              {equipamento
+                ? 'Este produto não tem S/N. A quantidade informada substitui a atual.'
+                : 'Este produto não tem S/N. A quantidade é somada à que o projeto já tem.'}
+            </p>
+          </div>
+        ) : (
+          <div>
+            <label className={labelClass}>S/N</label>
+            <input value={sn} onChange={e => setSn(e.target.value)} className={`${inputClass} font-mono`} placeholder="Número de série" />
+            <p className="text-xs text-slate-500 mt-1.5">
+              Produto sem número de série (ex.: bobina)? Desmarque “Controla S/N” em Produtos para cadastrar por quantidade.
+            </p>
+          </div>
+        )}
         <div>
           <label className={labelClass}>Nº Patrimônio (opcional)</label>
           <input value={patrimonio} onChange={e => setPatrimonio(e.target.value)} className={`${inputClass} font-mono`} placeholder="Nº..." />
@@ -160,11 +213,13 @@ export function EquipamentosProjetoAdmin() {
     if (!acc[key]) {
       acc[key] = { ean, nome, count: 0 }
     }
-    acc[key].count += 1
+    acc[key].count += eq.quantidade || 1
     return acc
   }, {})
 
   const relatorioData = Object.values(agrupamentoRelatorio).sort((a, b) => b.count - a.count)
+  const totalProdutos = relatorioData.length
+  const totalItens = relatorioData.reduce((soma, item) => soma + item.count, 0)
 
   async function fetchDados() {
     setLoading(true)
@@ -185,8 +240,9 @@ export function EquipamentosProjetoAdmin() {
         id, 
         ean, 
         sn, 
-        n_patrimonio, 
-        created_at, 
+        n_patrimonio,
+        quantidade,
+        created_at,
         produtos(nome),
         alocacao_equipamentos (
           id,
@@ -209,7 +265,7 @@ export function EquipamentosProjetoAdmin() {
   }, [id])
 
   useEffect(() => {
-    supabase.from('produtos').select('ean, nome').order('nome').then(({ data }) => {
+    supabase.from('produtos').select('ean, nome, controla_sn').order('nome').then(({ data }) => {
       if (data) setProdutos(data)
     })
   }, [])
@@ -283,7 +339,19 @@ export function EquipamentosProjetoAdmin() {
               },
               { key: 'ean', label: 'EAN', tdClassName: 'font-mono text-sm text-slate-400' },
               { key: 'produto', label: 'Produto', render: (eq) => <span className="font-semibold text-white">{eq.produtos?.nome || 'Desconhecido'}</span> },
-              { key: 'sn', label: 'S/N', render: (eq) => <span className="font-mono font-bold text-blue-400 tracking-wide">{eq.sn}</span> },
+              {
+                key: 'sn',
+                label: 'S/N',
+                render: (eq) => eq.sn
+                  ? <span className="font-mono font-bold text-blue-400 tracking-wide">{eq.sn}</span>
+                  : <span className="text-xs italic text-slate-500">Sem S/N</span>,
+              },
+              {
+                key: 'quantidade',
+                label: 'Qtd',
+                tdClassName: 'tabular-nums',
+                render: (eq) => <span className="font-bold text-white">{eq.quantidade || 1}</span>,
+              },
               { key: 'n_patrimonio', label: 'Nº Patrimônio', render: (eq) => <EditablePatrimonio eq={eq} onUpdate={fetchDados} /> },
               {
                 key: 'actions',
@@ -385,7 +453,7 @@ export function EquipamentosProjetoAdmin() {
       {/* Modal de Relatório */}
       <Modal isOpen={reportModalOpen} onClose={() => setReportModalOpen(false)} title={`Relatório: ${projeto?.nome || 'Projeto'}`}>
         <div className="space-y-4">
-          <p className="text-sm text-slate-400">Resumo da quantidade de itens bipados neste projeto agrupados por produto.</p>
+          <p className="text-sm text-slate-400">Resumo do projeto agrupado por produto. “Produtos” conta os tipos diferentes; “Itens” soma todas as unidades.</p>
           
           <div className="bg-[#0f172a] border border-[#1e3a5f] rounded-xl overflow-hidden">
             <table className="w-full text-left border-collapse text-sm">
@@ -411,12 +479,18 @@ export function EquipamentosProjetoAdmin() {
                   ))
                 )}
                 
-                {/* Linha de Total */}
+                {/* Linhas de Total */}
                 {relatorioData.length > 0 && (
-                  <tr className="bg-[#111827]">
-                    <td colSpan="2" className="p-3 text-right text-slate-400 font-bold uppercase tracking-wider">Total de Itens:</td>
-                    <td className="p-3 text-center text-white font-black text-xl">{equipamentos.length}</td>
-                  </tr>
+                  <>
+                    <tr className="bg-[#111827] border-b border-[#1e3a5f]/50">
+                      <td colSpan="2" className="p-3 text-right text-slate-400 font-bold uppercase tracking-wider">Total de Produtos:</td>
+                      <td className="p-3 text-center text-white font-black text-xl">{totalProdutos}</td>
+                    </tr>
+                    <tr className="bg-[#111827]">
+                      <td colSpan="2" className="p-3 text-right text-slate-400 font-bold uppercase tracking-wider">Total de Itens:</td>
+                      <td className="p-3 text-center text-white font-black text-xl">{totalItens}</td>
+                    </tr>
+                  </>
                 )}
               </tbody>
             </table>
