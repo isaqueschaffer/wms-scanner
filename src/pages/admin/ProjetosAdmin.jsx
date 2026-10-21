@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { Link } from 'react-router-dom'
 import { Modal } from '../../components/ui/Modal'
+import { Field } from '../../components/ui/Field'
 import { DataTable } from '../../components/ui/DataTable'
 import { Pencil, Trash2, Plus, Loader2, List } from 'lucide-react'
 
@@ -107,7 +108,15 @@ export function ProjetosAdmin() {
             onDeleteMany={handleDeleteMany}
             emptyMessage="Nenhum projeto encontrado."
             columns={[
-              { key: 'nome', label: 'Nome do Projeto', render: (p) => <span className="font-semibold text-white">{p.nome}</span> },
+              {
+                key: 'nome',
+                label: 'Nome do Projeto',
+                render: (p) => (
+                  <Link to={`/admin/projetos/${p.id}`} className="font-semibold text-white hover:text-blue-400 hover:underline">
+                    {p.nome}
+                  </Link>
+                ),
+              },
               { key: 'cliente', label: 'Cliente', render: (p) => <span className="text-slate-400">{p.clientes?.nome}</span> },
               { key: 'servicos', label: 'Serviços', render: (p) => (
                   <div className="flex flex-wrap gap-1">
@@ -125,13 +134,13 @@ export function ProjetosAdmin() {
                 tdClassName: 'text-right space-x-2',
                 render: (p) => (
                   <>
-                    <Link to={`/admin/projetos/${p.id}`} className="p-2 inline-block text-slate-400 hover:text-green-400 transition-colors bg-[#0f172a] rounded-lg border border-[#1e3a5f]/50 hover:border-green-500/30" title="Ver Itens Bipados">
+                    <Link to={`/admin/projetos/${p.id}`} className="p-2 inline-block text-slate-400 hover:text-green-400 transition-colors bg-[#0f172a] rounded-lg border border-[#1e3a5f]/50 hover:border-green-500/30" title="Ver Itens Bipados" aria-label="Ver Itens Bipados">
                       <List size={16} />
                     </Link>
-                    <button onClick={() => openEdit(p)} className="p-2 text-slate-400 hover:text-blue-400 transition-colors bg-[#0f172a] rounded-lg border border-[#1e3a5f]/50 hover:border-blue-500/30" title="Editar">
+                    <button onClick={() => openEdit(p)} className="p-2 text-slate-400 hover:text-blue-400 transition-colors bg-[#0f172a] rounded-lg border border-[#1e3a5f]/50 hover:border-blue-500/30" title="Editar" aria-label="Editar">
                       <Pencil size={16} />
                     </button>
-                    <button onClick={() => handleDelete(p.id)} className="p-2 text-slate-400 hover:text-red-400 transition-colors bg-[#0f172a] rounded-lg border border-[#1e3a5f]/50 hover:border-red-500/30" title="Excluir">
+                    <button onClick={() => handleDelete(p.id)} className="p-2 text-slate-400 hover:text-red-400 transition-colors bg-[#0f172a] rounded-lg border border-[#1e3a5f]/50 hover:border-red-500/30" title="Excluir" aria-label="Excluir">
                       <Trash2 size={16} />
                     </button>
                   </>
@@ -144,28 +153,29 @@ export function ProjetosAdmin() {
 
       <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={editId ? 'Editar Projeto' : 'Novo Projeto'}>
         <form onSubmit={handleSave} className="space-y-4">
-          <div>
-            <label className="block text-sm font-semibold text-slate-300 mb-2">Cliente</label>
+          <Field label="Cliente">
             <select
+              name="cliente"
               value={clienteId}
               onChange={e => setClienteId(e.target.value)}
               className="w-full px-4 py-3 rounded-xl bg-[#0f172a] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500"
             >
-              <option value="">-- Selecione o cliente --</option>
+              <option value="">— Selecione o cliente —</option>
               {clientes.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
             </select>
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-slate-300 mb-2">Nome do Projeto</label>
+          </Field>
+          <Field label="Nome do Projeto">
             <input
               type="text"
+              name="nome"
+              autoComplete="off"
               value={nome}
               onChange={e => setNome(e.target.value)}
               className="w-full px-4 py-3 rounded-xl bg-[#0f172a] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500"
             />
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-slate-300 mb-2">Serviços</label>
+          </Field>
+          <fieldset>
+            <legend className="block text-sm font-semibold text-slate-300 mb-2">Serviços</legend>
             <div className="flex flex-wrap gap-2">
               {SERVICOS_DISPONIVEIS.map(s => (
                 <label key={s} className="flex items-center gap-2 cursor-pointer bg-[#0f172a] border border-[#1e3a5f] px-3 py-2 rounded-lg hover:border-blue-500/50 transition-colors">
@@ -182,17 +192,17 @@ export function ProjetosAdmin() {
                 </label>
               ))}
             </div>
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-slate-300 mb-2">Escopo do Projeto</label>
+          </fieldset>
+          <Field label="Escopo do Projeto">
             <textarea
+              name="escopo"
               value={escopo}
               onChange={e => setEscopo(e.target.value)}
               rows={4}
               className="w-full px-4 py-3 rounded-xl bg-[#0f172a] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500 resize-none"
-              placeholder="Descreva as características e escopo deste projeto..."
+              placeholder="Descreva as características e escopo deste projeto…"
             />
-          </div>
+          </Field>
           <div className="flex justify-end gap-3 pt-4">
             <button type="button" onClick={() => setModalOpen(false)} className="px-5 py-2.5 rounded-xl bg-slate-800 text-slate-300 font-semibold hover:bg-slate-700">Cancelar</button>
             <button type="submit" disabled={!nome.trim() || !clienteId || saving} className="px-5 py-2.5 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-500 flex items-center gap-2 disabled:opacity-50">

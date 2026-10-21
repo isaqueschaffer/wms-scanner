@@ -375,14 +375,14 @@ export function AlocacaoEquipamentosAdmin() {
                     <button 
                       onClick={() => setEditModal(aloc)} 
                       className="p-2 text-slate-400 hover:text-blue-400 transition-colors bg-[#0f172a] rounded-lg border border-[#1e3a5f]/50 hover:border-blue-500/30"
-                      title="Editar alocação"
+                      title="Editar alocação" aria-label="Editar alocação"
                     >
                       <Edit size={16} />
                     </button>
                     <button 
                       onClick={() => handleDeleteAlocacao(aloc.id)} 
                       className="p-2 text-slate-500 hover:text-red-400 transition-colors bg-[#0f172a] rounded-lg border border-[#1e3a5f]/50 hover:border-red-500/30"
-                      title="Excluir registro"
+                      title="Excluir registro" aria-label="Excluir registro"
                     >
                       <Trash2 size={16} />
                     </button>

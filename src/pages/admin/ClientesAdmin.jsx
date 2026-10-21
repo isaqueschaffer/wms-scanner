@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
+import { Link } from 'react-router-dom'
 import { Modal } from '../../components/ui/Modal'
+import { Field } from '../../components/ui/Field'
 import { DataTable } from '../../components/ui/DataTable'
 import { Pencil, Trash2, Plus, Loader2 } from 'lucide-react'
 
@@ -142,8 +144,14 @@ export function ClientesAdmin() {
                 label: 'Nome do Cliente',
                 render: (c) => (
                   <div>
-                    <span className="font-semibold text-white">{c.nome}</span>
-                    {c.razao_social && <p className="text-xs text-slate-500">{c.razao_social}</p>}
+                    <Link
+                      to={`/admin/projetos?q=${encodeURIComponent(c.nome)}`}
+                      title={`Ver projetos de ${c.nome}`}
+                      className="font-semibold text-white hover:text-blue-400 hover:underline"
+                    >
+                      {c.nome}
+                    </Link>
+                    {c.razao_social && <p className="text-xs text-slate-400">{c.razao_social}</p>}
                   </div>
                 ),
               },
@@ -161,10 +169,10 @@ export function ClientesAdmin() {
                 tdClassName: 'text-right space-x-2', 
                 render: (c) => (
                   <>
-                    <button onClick={() => openEdit(c)} className="p-2 text-slate-400 hover:text-blue-400 transition-colors bg-[#0f172a] rounded-lg border border-[#1e3a5f]/50 hover:border-blue-500/30" title="Editar">
+                    <button onClick={() => openEdit(c)} className="p-2 text-slate-400 hover:text-blue-400 transition-colors bg-[#0f172a] rounded-lg border border-[#1e3a5f]/50 hover:border-blue-500/30" title="Editar" aria-label="Editar">
                       <Pencil size={16} />
                     </button>
-                    <button onClick={() => handleDelete(c.id)} className="p-2 text-slate-400 hover:text-red-400 transition-colors bg-[#0f172a] rounded-lg border border-[#1e3a5f]/50 hover:border-red-500/30" title="Excluir">
+                    <button onClick={() => handleDelete(c.id)} className="p-2 text-slate-400 hover:text-red-400 transition-colors bg-[#0f172a] rounded-lg border border-[#1e3a5f]/50 hover:border-red-500/30" title="Excluir" aria-label="Excluir">
                       <Trash2 size={16} />
                     </button>
                   </>
@@ -177,40 +185,36 @@ export function ClientesAdmin() {
 
       <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={editId ? 'Editar Cliente' : 'Novo Cliente'}>
         <form onSubmit={handleSave} className="space-y-4">
-          <div>
-            <label className="block text-sm font-semibold text-slate-300 mb-2">Nome fantasia</label>
+          <Field label="Nome fantasia">
             <input
               autoFocus
               type="text"
+              name="nome"
+              autoComplete="off"
               value={form.nome}
               onChange={e => setForm(f => ({ ...f, nome: e.target.value }))}
               className={inputClass}
               placeholder="Ex: Trilan"
             />
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-slate-300 mb-2">Razão social</label>
-            <input type="text" value={form.razao_social} onChange={e => setForm(f => ({ ...f, razao_social: e.target.value }))} className={inputClass} />
-          </div>
+          </Field>
+          <Field label="Razão social">
+            <input type="text" name="razao_social" autoComplete="off" value={form.razao_social} onChange={e => setForm(f => ({ ...f, razao_social: e.target.value }))} className={inputClass} />
+          </Field>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-slate-300 mb-2">CNPJ/CPF</label>
-              <input type="text" inputMode="numeric" value={form.cnpj_cpf} onChange={e => setForm(f => ({ ...f, cnpj_cpf: e.target.value }))} onBlur={() => setForm(f => ({ ...f, cnpj_cpf: formatarCnpjCpf(f.cnpj_cpf) }))} className={`${inputClass} font-mono`} placeholder="Só números" />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-slate-300 mb-2">E-mail</label>
-              <input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} className={inputClass} />
-            </div>
+            <Field label="CNPJ/CPF">
+              <input type="text" name="cnpj_cpf" autoComplete="off" inputMode="numeric" value={form.cnpj_cpf} onChange={e => setForm(f => ({ ...f, cnpj_cpf: e.target.value }))} onBlur={() => setForm(f => ({ ...f, cnpj_cpf: formatarCnpjCpf(f.cnpj_cpf) }))} className={`${inputClass} font-mono`} placeholder="Só números" />
+            </Field>
+            <Field label="E-mail">
+              <input type="email" name="email" autoComplete="off" spellCheck={false} value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} className={inputClass} />
+            </Field>
           </div>
           <div className="grid grid-cols-[1fr_6rem] gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-slate-300 mb-2">Cidade</label>
-              <input type="text" value={form.cidade} onChange={e => setForm(f => ({ ...f, cidade: e.target.value }))} className={inputClass} />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-slate-300 mb-2">UF</label>
-              <input type="text" maxLength={2} value={form.estado} onChange={e => setForm(f => ({ ...f, estado: e.target.value.toUpperCase() }))} className={`${inputClass} uppercase`} />
-            </div>
+            <Field label="Cidade">
+              <input type="text" name="cidade" autoComplete="off" value={form.cidade} onChange={e => setForm(f => ({ ...f, cidade: e.target.value }))} className={inputClass} />
+            </Field>
+            <Field label="UF">
+              <input type="text" name="uf" autoComplete="off" maxLength={2} value={form.estado} onChange={e => setForm(f => ({ ...f, estado: e.target.value.toUpperCase() }))} className={`${inputClass} uppercase`} />
+            </Field>
           </div>
           <div className="flex justify-end gap-3 pt-4">
             <button type="button" onClick={() => setModalOpen(false)} className="px-5 py-2.5 rounded-xl bg-slate-800 text-slate-300 font-semibold hover:bg-slate-700">Cancelar</button>

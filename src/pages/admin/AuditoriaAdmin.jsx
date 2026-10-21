@@ -117,7 +117,7 @@ export function AuditoriaAdmin() {
                   <button 
                     onClick={() => openDetails(log)} 
                     className="p-2 text-slate-400 hover:text-blue-400 transition-colors bg-[#0f172a] rounded-lg border border-[#1e3a5f]/50 hover:border-blue-500/30" 
-                    title="Ver Detalhes"
+                    title="Ver Detalhes" aria-label="Ver Detalhes"
                   >
                     <Eye size={16} />
                   </button>

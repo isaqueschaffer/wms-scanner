@@ -5,8 +5,9 @@ import { useToast } from '../../hooks/useToast'
 import { ToastContainer } from '../ui/ToastContainer'
 import { ProductModal } from './ProductModal'
 import * as XLSX from 'xlsx'
+import { Link } from 'react-router-dom'
 import {
-  Barcode, Hash, Package, Lock, Unlock, Download,
+  Barcode, Hash, Package, Lock, Unlock, Download, List,
   CheckCircle2, XCircle, RotateCcw, Loader2, Pencil, Trash2, Check, X,
 } from 'lucide-react'
 
@@ -470,10 +471,10 @@ export function Scanner({ session, onReset }) {
       <ToastContainer toasts={toasts} />
 
       {/* ── Header ──────────────────────────────────────────────────────── */}
-      <header className="bg-[#111827] border-b border-[#1e3a5f] px-6 py-3 flex items-center justify-between">
+      <header className="bg-[#111827] border-b border-[#1e3a5f] px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-lg bg-blue-600/20 text-blue-400">
-            <Barcode size={18} />
+            <Barcode size={18} aria-hidden="true" />
           </div>
           <div>
             <h1 className="text-sm font-black text-white leading-none">WMS Scanner</h1>
@@ -483,7 +484,17 @@ export function Scanner({ session, onReset }) {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            to={`/admin/projetos/${session.projetoId}`}
+            className="
+              flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold
+              bg-blue-700/20 text-blue-300 border border-blue-700/40
+              hover:bg-blue-700/40 transition-all
+            "
+          >
+            <List size={14} aria-hidden="true" /> Itens do projeto
+          </Link>
           <button
             id="btn-exportar-xlsx"
             onClick={exportXlsx}
@@ -533,11 +544,16 @@ export function Scanner({ session, onReset }) {
                   id="input-ean"
                   ref={eanRef}
                   type="text"
+                  name="ean"
+                  aria-label="EAN da caixa"
                   value={eanValue}
                   onChange={e => setEanValue(e.target.value)}
                   onKeyDown={e => handleKeyDown(e, handleEanEnter)}
-                  placeholder="Aponte o leitor aqui..."
+                  placeholder="Aponte o leitor aqui…"
                   autoComplete="off"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
                   className="
                     w-full px-5 py-5 rounded-xl bg-[#0f172a] border-2 border-blue-500/50
                     text-white placeholder-slate-600 text-3xl font-mono font-bold
@@ -554,6 +570,7 @@ export function Scanner({ session, onReset }) {
                 <div className="mt-6 flex flex-col gap-2">
                   <span className="text-slate-500 text-sm font-semibold uppercase tracking-wider text-center">Ou escolha manualmente</span>
                   <select
+                    aria-label="Escolher produto manualmente"
                     onChange={(e) => {
                       const ean = e.target.value
                       if (!ean) return
@@ -588,7 +605,7 @@ export function Scanner({ session, onReset }) {
                   <button
                     id="btn-destravar-ean"
                     onClick={unlockEan}
-                    title="Destravar (F2)"
+                    title="Destravar (F2)" aria-label="Destravar (F2)"
                     className="p-2 rounded-lg bg-slate-700/50 text-slate-400 hover:bg-slate-700 hover:text-white transition-all"
                   >
                     <Unlock size={16} />
@@ -609,6 +626,7 @@ export function Scanner({ session, onReset }) {
               <input
                 id="input-quantidade"
                 ref={qtyRef}
+                aria-label="Quantidade esperada da caixa"
                 type="number"
                 min="1"
                 value={qtyValue}
@@ -656,11 +674,16 @@ export function Scanner({ session, onReset }) {
                 id="input-sn"
                 ref={snRef}
                 type="text"
+                name="sn"
+                aria-label="Número de série"
                 value={snValue}
                 onChange={e => setSnValue(e.target.value)}
                 onKeyDown={e => handleKeyDown(e, handleSnEnter)}
-                placeholder="Bipe o SN..."
+                placeholder="Bipe o SN…"
                 autoComplete="off"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
                 className="
                   w-full px-5 py-5 rounded-xl bg-[#0f172a] border-2 border-green-500/50
                   text-white placeholder-slate-600 text-2xl font-mono font-bold
@@ -682,14 +705,21 @@ export function Scanner({ session, onReset }) {
             ${isComplete ? 'border-green-500/50' : 'border-[#1e3a5f]'}
           `}>
             <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">Progresso</p>
-            <div className={`text-7xl font-black leading-none ${countColor}`}>
+            <div className={`text-7xl font-black leading-none tabular-nums ${countColor}`}>
               {readCount}
             </div>
             {expectedQty > 0 && (
               <>
                 <p className="text-slate-600 text-sm mt-1">de {expectedQty} esperados</p>
                 {/* Barra de progresso */}
-                <div className="mt-4 h-2 rounded-full bg-slate-800 overflow-hidden">
+                <div
+                  role="progressbar"
+                  aria-label="Progresso da bipagem"
+                  aria-valuemin={0}
+                  aria-valuemax={expectedQty}
+                  aria-valuenow={Math.min(readCount, expectedQty)}
+                  className="mt-4 h-2 rounded-full bg-slate-800 overflow-hidden"
+                >
                   <div
                     className={`h-full rounded-full transition-all duration-500 ${isComplete ? 'bg-green-500' : 'bg-blue-500'}`}
                     style={{ width: `${progress}%` }}
@@ -735,10 +765,10 @@ export function Scanner({ session, onReset }) {
                           disabled={editSaving}
                           className="flex-1 min-w-0 bg-[#0f172a] border border-blue-500 rounded px-2 py-1 text-xs font-mono text-white focus:outline-none"
                         />
-                        <button onClick={handleEditSave} disabled={editSaving} title="Salvar" className="p-1 text-emerald-400 hover:text-emerald-300">
+                        <button onClick={handleEditSave} disabled={editSaving} title="Salvar" aria-label="Salvar" className="p-1 text-emerald-400 hover:text-emerald-300">
                           {editSaving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
                         </button>
-                        <button onClick={() => setEditing(null)} title="Cancelar" className="p-1 text-slate-500 hover:text-white">
+                        <button onClick={() => setEditing(null)} title="Cancelar" aria-label="Cancelar" className="p-1 text-slate-500 hover:text-white">
                           <X size={14} />
                         </button>
                       </>
@@ -749,10 +779,10 @@ export function Scanner({ session, onReset }) {
                           <span className="text-slate-600 text-xs ml-2">{h.time}</span>
                         </div>
                         <div className="flex items-center shrink-0">
-                          <button onClick={() => setEditing({ id: h.id, value: h.sn })} title="Editar S/N" className="p-1 text-slate-500 hover:text-blue-400">
+                          <button onClick={() => setEditing({ id: h.id, value: h.sn })} title="Editar S/N" aria-label="Editar S/N" className="p-1 text-slate-500 hover:text-blue-400">
                             <Pencil size={14} />
                           </button>
-                          <button onClick={() => handleDeleteSn(h)} title="Excluir S/N" className="p-1 text-slate-500 hover:text-red-400">
+                          <button onClick={() => handleDeleteSn(h)} title="Excluir S/N" aria-label="Excluir S/N" className="p-1 text-slate-500 hover:text-red-400">
                             <Trash2 size={14} />
                           </button>
                         </div>

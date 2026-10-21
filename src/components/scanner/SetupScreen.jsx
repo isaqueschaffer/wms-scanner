@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { Users, FolderOpen, Loader2 } from 'lucide-react'
 
@@ -161,12 +162,12 @@ export function SetupScreen({ onStart }) {
           >
             Sair
           </button>
-          <a
-            href="/admin"
-            className="text-xs font-semibold text-blue-500 hover:text-blue-400 transition-colors flex items-center gap-1"
+          <Link
+            to="/admin"
+            className="text-xs font-semibold text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1"
           >
             Painel Administrativo →
-          </a>
+          </Link>
         </div>
       </div>
     </div>

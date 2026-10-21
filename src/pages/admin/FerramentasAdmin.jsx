@@ -359,21 +359,21 @@ export function FerramentasAdmin() {
                   <button 
                     onClick={() => setHistoricoItem(f)}
                     className="p-2 text-slate-400 hover:text-purple-400 transition-colors bg-[#0f172a] rounded-lg border border-[#1e3a5f]/50 hover:border-purple-500/30"
-                    title="Ver Histórico"
+                    title="Ver Histórico" aria-label="Ver Histórico"
                   >
                     <History size={16} />
                   </button>
                   <button 
                     onClick={() => { setEditItem(f); setModalOpen(true) }}
                     className="p-2 text-slate-400 hover:text-blue-400 transition-colors bg-[#0f172a] rounded-lg border border-[#1e3a5f]/50 hover:border-blue-500/30"
-                    title="Editar"
+                    title="Editar" aria-label="Editar"
                   >
                     <Edit size={16} />
                   </button>
                   <button 
                     onClick={() => handleDelete(f.id)} 
                     className="p-2 text-slate-500 hover:text-red-400 transition-colors bg-[#0f172a] rounded-lg border border-[#1e3a5f]/50 hover:border-red-500/30"
-                    title="Excluir"
+                    title="Excluir" aria-label="Excluir"
                   >
                     <Trash2 size={16} />
                   </button>

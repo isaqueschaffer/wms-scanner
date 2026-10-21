@@ -419,14 +419,14 @@ export function AtribuicaoFerramentasAdmin() {
                   <button 
                     onClick={() => handleDevolver(a)} 
                     className="p-2 text-slate-400 hover:text-green-400 transition-colors bg-[#0f172a] rounded-lg border border-[#1e3a5f]/50 hover:border-green-500/30"
-                    title="Devolver ao Estoque"
+                    title="Devolver ao Estoque" aria-label="Devolver ao Estoque"
                   >
                     <ArchiveRestore size={16} />
                   </button>
                   <button 
                     onClick={() => { setEditItem(a); setTransferModalOpen(true) }}
                     className="p-2 text-slate-400 hover:text-orange-400 transition-colors bg-[#0f172a] rounded-lg border border-[#1e3a5f]/50 hover:border-orange-500/30"
-                    title="Transferir para outro Técnico"
+                    title="Transferir para outro Técnico" aria-label="Transferir para outro Técnico"
                   >
                     <ArrowRightLeft size={16} />
                   </button>

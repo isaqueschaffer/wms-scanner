@@ -157,10 +157,10 @@ export function ReunioesAdmin() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <button onClick={() => openEdit(r)} className="p-2 text-slate-400 hover:text-blue-400 transition-colors bg-slate-800 rounded-lg border border-transparent hover:border-blue-500/30" title="Editar">
+                        <button onClick={() => openEdit(r)} className="p-2 text-slate-400 hover:text-blue-400 transition-colors bg-slate-800 rounded-lg border border-transparent hover:border-blue-500/30" title="Editar" aria-label="Editar">
                           <Pencil size={16} />
                         </button>
-                        <button onClick={() => handleDelete(r.id)} className="p-2 text-slate-400 hover:text-red-400 transition-colors bg-slate-800 rounded-lg border border-transparent hover:border-red-500/30" title="Excluir">
+                        <button onClick={() => handleDelete(r.id)} className="p-2 text-slate-400 hover:text-red-400 transition-colors bg-slate-800 rounded-lg border border-transparent hover:border-red-500/30" title="Excluir" aria-label="Excluir">
                           <Trash2 size={16} />
                         </button>
                       </div>

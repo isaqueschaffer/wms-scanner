@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useNavigate } from 'react-router-dom'
+import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { Mail, Lock, Loader2, LogIn, UserPlus } from 'lucide-react'
 
 export function Login() {
@@ -10,6 +11,7 @@ export function Login() {
   const [error, setError] = useState(null)
   const [isRegistering, setIsRegistering] = useState(false)
   const navigate = useNavigate()
+  useDocumentTitle('Entrar')
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -49,20 +51,24 @@ export function Login() {
         </div>
 
         {error && (
-          <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm font-semibold text-center">
+          <div role="alert" className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm font-semibold text-center">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">E-mail</label>
+            <label htmlFor="login-email" className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">E-mail</label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <Mail size={18} className="text-slate-500" />
+                <Mail size={18} className="text-slate-500" aria-hidden="true" />
               </div>
               <input
+                id="login-email"
+                name="email"
                 type="email"
+                autoComplete="username"
+                spellCheck={false}
                 required
                 value={email}
                 onChange={e => setEmail(e.target.value)}
@@ -73,13 +79,16 @@ export function Login() {
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Senha</label>
+            <label htmlFor="login-senha" className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Senha</label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <Lock size={18} className="text-slate-500" />
+                <Lock size={18} className="text-slate-500" aria-hidden="true" />
               </div>
               <input
+                id="login-senha"
+                name="password"
                 type="password"
+                autoComplete={isRegistering ? 'new-password' : 'current-password'}
                 required
                 value={password}
                 onChange={e => setPassword(e.target.value)}

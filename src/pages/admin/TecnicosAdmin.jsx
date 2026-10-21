@@ -274,13 +274,13 @@ export function TecnicosAdmin() {
                 tdClassName: 'text-right space-x-2',
                 render: (t) => (
                   <>
-                    <button onClick={() => setFerramentasModalTecnico(t)} className="p-2 text-slate-400 hover:text-green-400 transition-colors bg-[#0f172a] rounded-lg border border-[#1e3a5f]/50 hover:border-green-500/30" title="Ver Ferramentas">
+                    <button onClick={() => setFerramentasModalTecnico(t)} className="p-2 text-slate-400 hover:text-green-400 transition-colors bg-[#0f172a] rounded-lg border border-[#1e3a5f]/50 hover:border-green-500/30" title="Ver Ferramentas" aria-label="Ver Ferramentas">
                       <PenTool size={16} />
                     </button>
-                    <button onClick={() => openEdit(t)} className="p-2 text-slate-400 hover:text-blue-400 transition-colors bg-[#0f172a] rounded-lg border border-[#1e3a5f]/50 hover:border-blue-500/30" title="Editar">
+                    <button onClick={() => openEdit(t)} className="p-2 text-slate-400 hover:text-blue-400 transition-colors bg-[#0f172a] rounded-lg border border-[#1e3a5f]/50 hover:border-blue-500/30" title="Editar" aria-label="Editar">
                       <Pencil size={16} />
                     </button>
-                    <button onClick={() => handleDelete(t.id)} className="p-2 text-slate-400 hover:text-red-400 transition-colors bg-[#0f172a] rounded-lg border border-[#1e3a5f]/50 hover:border-red-500/30" title="Excluir">
+                    <button onClick={() => handleDelete(t.id)} className="p-2 text-slate-400 hover:text-red-400 transition-colors bg-[#0f172a] rounded-lg border border-[#1e3a5f]/50 hover:border-red-500/30" title="Excluir" aria-label="Excluir">
                       <Trash2 size={16} />
                     </button>
                   </>

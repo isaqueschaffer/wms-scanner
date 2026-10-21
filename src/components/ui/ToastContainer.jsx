@@ -12,6 +12,7 @@ function Toast({ toast }) {
   const Icon = cfg.icon
   return (
     <div
+      role={toast.type === 'error' ? 'alert' : 'status'}
       className={`
         flex items-start gap-3 px-4 py-3 rounded-xl border backdrop-blur-md
         shadow-2xl min-w-[280px] max-w-[420px]
@@ -19,7 +20,7 @@ function Toast({ toast }) {
         ${toast.exiting ? 'toast-exit' : 'toast-enter'}
       `}
     >
-      <Icon size={20} className={`mt-0.5 shrink-0 ${cfg.icon_color}`} />
+      <Icon size={20} aria-hidden="true" className={`mt-0.5 shrink-0 ${cfg.icon_color}`} />
       <p className="text-sm font-semibold leading-snug">{toast.message}</p>
     </div>
   )
@@ -27,7 +28,7 @@ function Toast({ toast }) {
 
 export function ToastContainer({ toasts }) {
   return (
-    <div className="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none">
+    <div role="region" aria-label="Notificações" aria-live="polite" className="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none">
       {toasts.map(t => <Toast key={t.id} toast={t} />)}
     </div>
   )

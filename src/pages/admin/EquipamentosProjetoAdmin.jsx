@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
-import { Loader2, ArrowLeft, Trash2, UserCheck, X, FileText, Plus, Pencil } from 'lucide-react'
+import { Loader2, ArrowLeft, Trash2, UserCheck, FileText, Plus, Pencil } from 'lucide-react'
 import { DataTable } from '../../components/ui/DataTable'
 import { Modal } from '../../components/ui/Modal'
+import { Field } from '../../components/ui/Field'
+import { Breadcrumb } from '../../components/ui/Breadcrumb'
+import { useDocumentTitle } from '../../hooks/useDocumentTitle'
 
 function EditablePatrimonio({ eq, onUpdate }) {
   const [value, setValue] = useState(eq.n_patrimonio || '')
@@ -137,28 +140,30 @@ function EquipamentoFormModal({ isOpen, onClose, projetoId, equipamento, produto
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={equipamento ? 'Editar equipamento' : 'Adicionar equipamento'}>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className={labelClass}>Produto</label>
-          <select value={ean} onChange={e => setEan(e.target.value)} className={inputClass}>
-            <option value="">Selecione...</option>
+        <Field label="Produto" labelClassName={labelClass}>
+          <select name="produto" value={ean} onChange={e => setEan(e.target.value)} className={inputClass}>
+            <option value="">Selecione…</option>
             {produtos.map(p => (
               <option key={p.ean} value={p.ean}>{p.nome} ({p.ean})</option>
             ))}
           </select>
-        </div>
+        </Field>
         {semSn ? (
           <div>
-            <label className={labelClass}>Quantidade</label>
-            <input
-              type="number"
-              inputMode="numeric"
-              min={1}
-              step={1}
-              value={quantidade}
-              onChange={e => setQuantidade(e.target.value)}
-              className={`${inputClass} font-mono`}
-            />
-            <p className="text-xs text-slate-500 mt-1.5">
+            <Field label="Quantidade" labelClassName={labelClass}>
+              <input
+                name="quantidade"
+                type="number"
+                inputMode="numeric"
+                min={1}
+                step={1}
+                autoComplete="off"
+                value={quantidade}
+                onChange={e => setQuantidade(e.target.value)}
+                className={`${inputClass} font-mono`}
+              />
+            </Field>
+            <p className="text-xs text-slate-400 mt-1.5">
               {equipamento
                 ? 'Este produto não tem S/N. A quantidade informada substitui a atual.'
                 : 'Este produto não tem S/N. A quantidade é somada à que o projeto já tem.'}
@@ -166,19 +171,19 @@ function EquipamentoFormModal({ isOpen, onClose, projetoId, equipamento, produto
           </div>
         ) : (
           <div>
-            <label className={labelClass}>S/N</label>
-            <input value={sn} onChange={e => setSn(e.target.value)} className={`${inputClass} font-mono`} placeholder="Número de série" />
-            <p className="text-xs text-slate-500 mt-1.5">
+            <Field label="S/N" labelClassName={labelClass}>
+              <input name="sn" value={sn} onChange={e => setSn(e.target.value)} autoComplete="off" autoCapitalize="none" autoCorrect="off" spellCheck={false} className={`${inputClass} font-mono`} placeholder="Número de série" />
+            </Field>
+            <p className="text-xs text-slate-400 mt-1.5">
               Produto sem número de série (ex.: bobina)? Desmarque “Controla S/N” em Produtos para cadastrar por quantidade.
             </p>
           </div>
         )}
-        <div>
-          <label className={labelClass}>Nº Patrimônio (opcional)</label>
-          <input value={patrimonio} onChange={e => setPatrimonio(e.target.value)} className={`${inputClass} font-mono`} placeholder="Nº..." />
-        </div>
+        <Field label="Nº Patrimônio (opcional)" labelClassName={labelClass}>
+          <input name="patrimonio" value={patrimonio} onChange={e => setPatrimonio(e.target.value)} autoComplete="off" autoCapitalize="none" autoCorrect="off" spellCheck={false} className={`${inputClass} font-mono`} placeholder="Nº…" />
+        </Field>
 
-        {erro && <p className="text-sm text-red-400">{erro}</p>}
+        {erro && <p role="alert" className="text-sm text-red-400">{erro}</p>}
 
         <div className="flex justify-end gap-3 pt-2">
           <button type="button" onClick={onClose} className="px-5 py-2.5 rounded-xl bg-slate-800 text-slate-300 font-semibold hover:bg-slate-700">
@@ -203,6 +208,8 @@ export function EquipamentosProjetoAdmin() {
   const [reportModalOpen, setReportModalOpen] = useState(false)
   const [produtos, setProdutos] = useState([])
   const [formModal, setFormModal] = useState({ open: false, equipamento: null })
+
+  useDocumentTitle(projeto?.nome)
 
   // Função para agrupar equipamentos pelo nome do produto
   const agrupamentoRelatorio = equipamentos.reduce((acc, eq) => {
@@ -285,20 +292,31 @@ export function EquipamentosProjetoAdmin() {
 
   return (
     <div className="max-w-6xl mx-auto">
+      <Breadcrumb
+        items={[
+          { label: 'Projetos', to: '/admin/projetos' },
+          ...(projeto?.clientes?.nome
+            ? [{ label: projeto.clientes.nome, to: `/admin/projetos?q=${encodeURIComponent(projeto.clientes.nome)}` }]
+            : []),
+          { label: projeto?.nome || 'Carregando…' },
+        ]}
+      />
+
       {/* Header */}
       <div className="flex flex-col md:flex-row items-start md:items-center gap-4 mb-8">
-        <Link 
+        <Link
           to="/admin/projetos"
+          aria-label="Voltar para Projetos"
           className="p-3 bg-[#111827] hover:bg-[#1e3a5f]/50 border border-[#1e3a5f] rounded-xl text-slate-400 hover:text-white transition-colors"
         >
-          <ArrowLeft size={20} />
+          <ArrowLeft size={20} aria-hidden="true" />
         </Link>
         <div className="flex-1">
           <h1 className="text-2xl font-black text-white">
-            {projeto ? projeto.nome : 'Carregando projeto...'}
+            {projeto ? projeto.nome : 'Carregando projeto…'}
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Cliente: {projeto?.clientes?.nome || '...'}
+          <p className="text-sm text-slate-400 mt-1">
+            Cliente: {projeto?.clientes?.nome || '…'}
           </p>
         </div>
         <button
@@ -362,7 +380,7 @@ export function EquipamentosProjetoAdmin() {
                       <button 
                         onClick={() => setAlocacaoModal(eq)} 
                         className="p-2 text-red-400 hover:text-red-300 transition-colors bg-[#0f172a] rounded-lg border border-red-500/30 hover:border-red-500/50"
-                        title="Ver Histórico de Retirada"
+                        title="Ver Histórico de Retirada" aria-label="Ver Histórico de Retirada"
                       >
                         <UserCheck size={16} />
                       </button>
@@ -370,14 +388,14 @@ export function EquipamentosProjetoAdmin() {
                     <button
                       onClick={() => setFormModal({ open: true, equipamento: eq })}
                       className="p-2 text-slate-500 hover:text-blue-400 transition-colors bg-[#0f172a] rounded-lg border border-[#1e3a5f]/50 hover:border-blue-500/30"
-                      title="Editar equipamento"
+                      title="Editar equipamento" aria-label="Editar equipamento"
                     >
                       <Pencil size={16} />
                     </button>
                     <button 
                       onClick={() => handleDelete(eq.id)} 
                       className="p-2 text-slate-500 hover:text-red-400 transition-colors bg-[#0f172a] rounded-lg border border-[#1e3a5f]/50 hover:border-red-500/30"
-                      title="Excluir bipe"
+                      title="Excluir bipe" aria-label="Excluir bipe"
                     >
                       <Trash2 size={16} />
                     </button>
@@ -399,24 +417,13 @@ export function EquipamentosProjetoAdmin() {
       />
 
       {/* Modal Histórico de Alocação */}
-      {alocacaoModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-[#111827] border border-[#1e3a5f] rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden">
-            <div className="flex items-center justify-between p-6 border-b border-[#1e3a5f]">
-              <div>
-                <h3 className="text-xl font-bold text-white">Histórico de Retirada</h3>
-                <p className="text-sm text-slate-400 mt-1">S/N: <span className="font-mono text-blue-400">{alocacaoModal.sn}</span></p>
-              </div>
-              <button 
-                onClick={() => setAlocacaoModal(null)}
-                className="text-slate-500 hover:text-white p-2 rounded-lg transition-colors"
-              >
-                <X size={20} />
-              </button>
-            </div>
-            
-            <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
-              {alocacaoModal.alocacao_equipamentos?.map((aloc, idx) => (
+      <Modal
+        isOpen={!!alocacaoModal}
+        onClose={() => setAlocacaoModal(null)}
+        title={`Histórico de Retirada${alocacaoModal?.sn ? ` — S/N ${alocacaoModal.sn}` : ''}`}
+      >
+        <div className="space-y-4">
+              {alocacaoModal?.alocacao_equipamentos?.map((aloc, idx) => (
                 <div key={aloc.id || idx} className="bg-[#0f172a] p-4 rounded-xl border border-[#1e3a5f]/50 relative">
                   <div className="absolute top-4 right-4 text-xs font-medium text-slate-500 tabular-nums">
                     {new Date(aloc.data_alocacao).toLocaleString()}
@@ -444,10 +451,8 @@ export function EquipamentosProjetoAdmin() {
                   </div>
                 </div>
               ))}
-            </div>
-          </div>
         </div>
-      )}
+      </Modal>
 
       {/* Modal de Relatório */}
       <Modal isOpen={reportModalOpen} onClose={() => setReportModalOpen(false)} title={`Relatório: ${projeto?.nome || 'Projeto'}`}>

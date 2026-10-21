@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { Modal } from '../../components/ui/Modal'
+import { Field } from '../../components/ui/Field'
 import { DataTable } from '../../components/ui/DataTable'
 import { Pencil, Trash2, Plus, Loader2 } from 'lucide-react'
 
@@ -154,10 +155,10 @@ export function ProdutosAdmin() {
                 tdClassName: 'text-right space-x-2',
                 render: (p) => (
                   <>
-                    <button onClick={() => openEdit(p)} className="p-2 text-slate-400 hover:text-blue-400 transition-colors bg-[#0f172a] rounded-lg border border-[#1e3a5f]/50 hover:border-blue-500/30" title="Editar">
+                    <button onClick={() => openEdit(p)} className="p-2 text-slate-400 hover:text-blue-400 transition-colors bg-[#0f172a] rounded-lg border border-[#1e3a5f]/50 hover:border-blue-500/30" title="Editar" aria-label="Editar">
                       <Pencil size={16} />
                     </button>
-                    <button onClick={() => handleDelete(p.ean)} className="p-2 text-slate-400 hover:text-red-400 transition-colors bg-[#0f172a] rounded-lg border border-[#1e3a5f]/50 hover:border-red-500/30" title="Excluir">
+                    <button onClick={() => handleDelete(p.ean)} className="p-2 text-slate-400 hover:text-red-400 transition-colors bg-[#0f172a] rounded-lg border border-[#1e3a5f]/50 hover:border-red-500/30" title="Excluir" aria-label="Excluir">
                       <Trash2 size={16} />
                     </button>
                   </>
@@ -170,42 +171,42 @@ export function ProdutosAdmin() {
 
       <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={editEan ? 'Editar Produto' : 'Novo Produto'}>
         <form onSubmit={handleSave} className="space-y-4">
-          <div>
-            <label className="block text-sm font-semibold text-slate-300 mb-2">EAN (Código de Barras)</label>
+          <Field label="EAN (Código de Barras)">
             <input
               autoFocus={!editEan}
               type="text"
+              name="ean"
+              autoComplete="off"
+              spellCheck={false}
               value={ean}
               onChange={e => setEan(e.target.value)}
               disabled={!!editEan}
               className="w-full px-4 py-3 rounded-xl bg-[#0f172a] border border-[#1e3a5f] text-white disabled:opacity-50"
             />
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-slate-300 mb-2">Nome</label>
+          </Field>
+          <Field label="Nome">
             <input
               autoFocus={!!editEan}
               type="text"
+              name="nome"
+              autoComplete="off"
               value={nome}
               onChange={e => setNome(e.target.value)}
               className="w-full px-4 py-3 rounded-xl bg-[#0f172a] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30"
             />
-          </div>
+          </Field>
           <div className="grid grid-cols-1 sm:grid-cols-[1fr_7rem_9rem] gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-slate-300 mb-2">Código interno (SKU)</label>
-              <input type="text" value={codigo} onChange={e => setCodigo(e.target.value)} className={`${inputClass} font-mono`} />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-slate-300 mb-2">Unidade</label>
-              <select value={unidade} onChange={e => setUnidade(e.target.value)} className={inputClass}>
+            <Field label="Código interno (SKU)">
+              <input type="text" name="codigo" autoComplete="off" spellCheck={false} value={codigo} onChange={e => setCodigo(e.target.value)} className={`${inputClass} font-mono`} />
+            </Field>
+            <Field label="Unidade">
+              <select name="unidade" value={unidade} onChange={e => setUnidade(e.target.value)} className={inputClass}>
                 {UNIDADES.map(u => <option key={u} value={u}>{u}</option>)}
               </select>
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-slate-300 mb-2">NCM</label>
-              <input type="text" inputMode="numeric" maxLength={10} value={ncm} onChange={e => setNcm(e.target.value)} className={`${inputClass} font-mono`} placeholder="8 dígitos" />
-            </div>
+            </Field>
+            <Field label="NCM">
+              <input type="text" name="ncm" autoComplete="off" inputMode="numeric" maxLength={10} value={ncm} onChange={e => setNcm(e.target.value)} className={`${inputClass} font-mono`} placeholder="8 dígitos" />
+            </Field>
           </div>
           <label className="flex items-start gap-3 cursor-pointer select-none">
             <input type="checkbox" checked={controlaSn} onChange={e => setControlaSn(e.target.checked)} className="mt-1 w-4 h-4 accent-blue-500" />
