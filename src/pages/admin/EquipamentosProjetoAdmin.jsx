@@ -219,7 +219,6 @@ export function EquipamentosProjetoAdmin() {
 
   const relatorioData = Object.values(agrupamentoRelatorio).sort((a, b) => b.count - a.count)
   const totalProdutos = relatorioData.length
-  const totalItens = relatorioData.reduce((soma, item) => soma + item.count, 0)
 
   async function fetchDados() {
     setLoading(true)
@@ -453,7 +452,7 @@ export function EquipamentosProjetoAdmin() {
       {/* Modal de Relatório */}
       <Modal isOpen={reportModalOpen} onClose={() => setReportModalOpen(false)} title={`Relatório: ${projeto?.nome || 'Projeto'}`}>
         <div className="space-y-4">
-          <p className="text-sm text-slate-400">Resumo do projeto agrupado por produto. “Produtos” conta os tipos diferentes; “Itens” soma todas as unidades.</p>
+          <p className="text-sm text-slate-400">Resumo da quantidade de itens neste projeto agrupados por produto.</p>
           
           <div className="bg-[#0f172a] border border-[#1e3a5f] rounded-xl overflow-hidden">
             <table className="w-full text-left border-collapse text-sm">
@@ -481,16 +480,10 @@ export function EquipamentosProjetoAdmin() {
                 
                 {/* Linhas de Total */}
                 {relatorioData.length > 0 && (
-                  <>
-                    <tr className="bg-[#111827] border-b border-[#1e3a5f]/50">
-                      <td colSpan="2" className="p-3 text-right text-slate-400 font-bold uppercase tracking-wider">Total de Produtos:</td>
-                      <td className="p-3 text-center text-white font-black text-xl">{totalProdutos}</td>
-                    </tr>
-                    <tr className="bg-[#111827]">
-                      <td colSpan="2" className="p-3 text-right text-slate-400 font-bold uppercase tracking-wider">Total de Itens:</td>
-                      <td className="p-3 text-center text-white font-black text-xl">{totalItens}</td>
-                    </tr>
-                  </>
+                  <tr className="bg-[#111827]">
+                    <td colSpan="2" className="p-3 text-right text-slate-400 font-bold uppercase tracking-wider">Total de Produtos:</td>
+                    <td className="p-3 text-center text-white font-black text-xl">{totalProdutos}</td>
+                  </tr>
                 )}
               </tbody>
             </table>
