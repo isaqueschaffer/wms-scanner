@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
-import { Loader2, ArrowLeft, Trash2, UserCheck, FileText, Plus, Minus, Pencil } from 'lucide-react'
+import { Loader2, ArrowLeft, Trash2, UserCheck, FileText, Plus, Minus, Pencil, Trash } from 'lucide-react'
 import { DataTable } from '../../components/ui/DataTable'
 import { Modal } from '../../components/ui/Modal'
 import { Field } from '../../components/ui/Field'
@@ -208,6 +208,7 @@ export function EquipamentosProjetoAdmin() {
   const [reportModalOpen, setReportModalOpen] = useState(false)
   const [produtos, setProdutos] = useState([])
   const [formModal, setFormModal] = useState({ open: false, equipamento: null })
+  const [totalLixeira, setTotalLixeira] = useState(0)
 
   useDocumentTitle(projeto?.nome)
 
@@ -262,6 +263,13 @@ export function EquipamentosProjetoAdmin() {
       .order('created_at', { ascending: false })
       
     if (resEquip.data) setEquipamentos(resEquip.data)
+
+    // 3. Quantos itens estão na lixeira deste projeto
+    const resLixeira = await supabase
+      .from('equipamentos_lixeira')
+      .select('id', { count: 'exact', head: true })
+      .eq('projeto_id', id)
+    setTotalLixeira(resLixeira.count || 0)
     
     setLoading(false)
   }
@@ -277,7 +285,7 @@ export function EquipamentosProjetoAdmin() {
   }, [])
 
   async function handleDelete(idEquip) {
-    if (!window.confirm('Excluir este equipamento? Ele não contará mais neste projeto.')) return
+    if (!window.confirm('Mover este equipamento para a lixeira? Ele não contará mais neste projeto, mas poderá ser restaurado.')) return
     await supabase.from('equipamentos').delete().eq('id', idEquip)
     fetchDados()
   }
@@ -330,6 +338,12 @@ export function EquipamentosProjetoAdmin() {
           className="w-full md:w-auto flex justify-center items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-xl font-bold transition-all shadow-lg shadow-red-600/20"
         >
           <Minus size={18} aria-hidden="true" /> Retirar do Projeto
+        </Link>
+        <Link
+          to={`/admin/projetos/${id}/lixeira`}
+          className="w-full md:w-auto flex justify-center items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl font-bold transition-all"
+        >
+          <Trash size={18} aria-hidden="true" /> Lixeira{totalLixeira > 0 && <span className="tabular-nums">({totalLixeira})</span>}
         </Link>
         <button 
           onClick={() => setReportModalOpen(true)}

@@ -7,16 +7,16 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle'
 import { ToastContainer } from '../ui/ToastContainer'
 import {
   Barcode, Hash, Package, Lock, Unlock, List, Undo2,
-  CheckCircle2, RotateCcw, Loader2, MinusCircle,
+  CheckCircle2, RotateCcw, Loader2, MinusCircle, Trash,
 } from 'lucide-react'
 
 // Mesmo fluxo do scanner (EAN → quantidade → S/N), mas cada leitura TIRA o item do projeto.
-// A exclusão/atualização em equipamentos já entra na Auditoria.
+// O que sai vai para a lixeira do projeto (e pode voltar); também entra na Auditoria.
 const PHASE = { EAN: 'ean', QTY: 'qty', SN: 'sn' }
 const HISTORY_LIMIT = 50
 // Botão só com ícone: área clicável de 40x40px mesmo com o ícone pequeno
 const BTN_ICONE = 'inline-flex items-center justify-center w-10 h-10 shrink-0 rounded-lg transition-all'
-const AVISO_HISTORICO = 'Este item tem histórico de retirada por técnico, que também será apagado. Continuar?'
+const AVISO_HISTORICO = 'Este item tem histórico de retirada por técnico. Ele vai para a lixeira com o histórico e pode ser restaurado. Continuar?'
 
 export function RetiradaScanner() {
   const { id: projetoId } = useParams()
@@ -188,28 +188,27 @@ export function RetiradaScanner() {
   async function retirarQuantidade(produto, qty) {
     const linha = itensRef.current.find(eq => eq.ean === produto.ean && !eq.sn)
     if (!linha) return
-    const retirarTudo = qty >= linha.quantidade
-    if (retirarTudo && linha.alocacao_equipamentos?.length > 0 && !window.confirm(AVISO_HISTORICO)) return
+    if (qty >= linha.quantidade && linha.alocacao_equipamentos?.length > 0 && !window.confirm(AVISO_HISTORICO)) return
 
     setProcessing(true)
-    const consulta = supabase.from('equipamentos')
-    const { data, error } = await (retirarTudo
-      ? consulta.delete().eq('id', linha.id)
-      : consulta.update({ quantidade: linha.quantidade - qty }).eq('id', linha.id)
-    ).select('id')
+    const { error } = await supabase.rpc('retirar_equipamento_sem_sn', {
+      p_projeto_id: projetoId,
+      p_ean: produto.ean,
+      p_quantidade: qty,
+    })
     setProcessing(false)
 
-    if (error || !data?.length) {
+    if (error) {
       playError()
-      addToast({ type: 'error', message: error ? `Erro ao retirar: ${error.message}` : 'Este item já não está no projeto.', duration: 4000 })
+      addToast({ type: 'error', message: `Erro ao retirar: ${error.message}`, duration: 4000 })
       return
     }
 
-    atualizarItens(lista => retirarTudo
+    atualizarItens(lista => qty >= linha.quantidade
       ? lista.filter(eq => eq.id !== linha.id)
       : lista.map(eq => eq.id === linha.id ? { ...eq, quantidade: eq.quantidade - qty } : eq))
     playSuccess()
-    addToast({ type: 'success', message: `Retirado: ${qty} × ${produto.nome}`, duration: 4000 })
+    addToast({ type: 'success', message: `Retirado: ${qty} × ${produto.nome} (foi para a lixeira)`, duration: 4000 })
     unlockEan()
   }
 
@@ -286,24 +285,36 @@ export function RetiradaScanner() {
     ].slice(0, HISTORY_LIMIT))
   }
 
-  // ── Desfazer: devolve ao projeto um S/N retirado por engano ───────────────
+  // ── Desfazer: restaura da lixeira um S/N retirado por engano ──────────────
   async function handleDesfazer(item) {
-    const { linha } = item
-    const { error } = await supabase.from('equipamentos').insert({
-      id: linha.id,
-      projeto_id: projetoId,
-      ean: linha.ean,
-      sn: linha.sn,
-      quantidade: linha.quantidade,
-      n_patrimonio: linha.n_patrimonio,
-      created_at: linha.created_at,
-    })
-    if (error) {
+    const falhou = mensagem => {
       playError()
-      addToast({ type: 'error', message: `Erro ao desfazer: ${error.message}`, duration: 4000 })
+      addToast({ type: 'error', message: mensagem, duration: 4000 })
+    }
+
+    const { data: naLixeira, error: erroBusca } = await supabase
+      .from('equipamentos_lixeira')
+      .select('id')
+      .eq('equipamento_id', item.id)
+      .order('removido_em', { ascending: false })
+      .limit(1)
+    if (erroBusca || !naLixeira?.length) {
+      falhou('Não achei este item na lixeira. Restaure pela tela da Lixeira do projeto.')
       return
     }
-    atualizarItens(lista => [...lista, { ...linha, alocacao_equipamentos: [] }])
+
+    const { data: resultado, error } = await supabase.rpc('restaurar_da_lixeira', { p_ids: [naLixeira[0].id] })
+    if (error || resultado?.falhas?.length) {
+      falhou(`Erro ao desfazer: ${error?.message || resultado.falhas[0].motivo}`)
+      return
+    }
+
+    const { data: linha } = await supabase
+      .from('equipamentos')
+      .select('id, ean, sn, quantidade, n_patrimonio, created_at, alocacao_equipamentos(id)')
+      .eq('id', item.id)
+      .maybeSingle()
+    if (linha) atualizarItens(lista => [...lista, linha])
     setHistory(prev => prev.filter(h => h.id !== item.id))
     setReadCount(c => Math.max(0, c - 1))
     addToast({ type: 'success', message: `S/N devolvido ao projeto: ${item.sn}` })
@@ -364,6 +375,12 @@ export function RetiradaScanner() {
             className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold bg-blue-700/20 text-blue-300 border border-blue-700/40 hover:bg-blue-700/40 transition-all"
           >
             <List size={14} aria-hidden="true" /> Itens do projeto
+          </Link>
+          <Link
+            to={`${voltarHref}/lixeira`}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold bg-slate-700/40 text-slate-300 border border-slate-700 hover:bg-slate-700/60 transition-all"
+          >
+            <Trash size={14} aria-hidden="true" /> Lixeira
           </Link>
           <button
             onClick={() => navigate(voltarHref)}
@@ -579,15 +596,13 @@ export function RetiradaScanner() {
                       <span className="font-mono text-slate-300 text-xs break-all">{h.sn}</span>
                       <span className="text-slate-400 text-xs ml-2 tabular-nums">{h.time}</span>
                     </div>
-                    {!(h.linha.alocacao_equipamentos?.length > 0) && (
-                      <button
-                        onClick={() => handleDesfazer(h)}
-                        title="Desfazer: devolver ao projeto" aria-label="Desfazer: devolver ao projeto"
-                        className={`${BTN_ICONE} text-slate-400 hover:text-emerald-400`}
-                      >
-                        <Undo2 size={14} aria-hidden="true" />
-                      </button>
-                    )}
+                    <button
+                      onClick={() => handleDesfazer(h)}
+                      title="Desfazer: devolver ao projeto" aria-label="Desfazer: devolver ao projeto"
+                      className={`${BTN_ICONE} text-slate-400 hover:text-emerald-400`}
+                    >
+                      <Undo2 size={14} aria-hidden="true" />
+                    </button>
                   </li>
                 ))}
               </ul>

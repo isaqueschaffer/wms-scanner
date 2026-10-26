@@ -20,6 +20,7 @@ const ClientesAdmin = pagina(() => import('./pages/admin/ClientesAdmin'), 'Clien
 const ProjetosAdmin = pagina(() => import('./pages/admin/ProjetosAdmin'), 'ProjetosAdmin')
 const ProdutosAdmin = pagina(() => import('./pages/admin/ProdutosAdmin'), 'ProdutosAdmin')
 const EquipamentosProjetoAdmin = pagina(() => import('./pages/admin/EquipamentosProjetoAdmin'), 'EquipamentosProjetoAdmin')
+const LixeiraProjetoAdmin = pagina(() => import('./pages/admin/LixeiraProjetoAdmin'), 'LixeiraProjetoAdmin')
 const AuditoriaAdmin = pagina(() => import('./pages/admin/AuditoriaAdmin'), 'AuditoriaAdmin')
 const TecnicosAdmin = pagina(() => import('./pages/admin/TecnicosAdmin'), 'TecnicosAdmin')
 const ProjetoKanban = pagina(() => import('./pages/admin/ProjetoKanban'), 'ProjetoKanban')
@@ -64,6 +65,7 @@ export default function App() {
               <Route path="clientes" element={<ClientesAdmin />} />
               <Route path="projetos" element={<ProjetosAdmin />} />
               <Route path="projetos/:id" element={<EquipamentosProjetoAdmin />} />
+              <Route path="projetos/:id/lixeira" element={<LixeiraProjetoAdmin />} />
               <Route path="kanban" element={<ProjetoKanban />} />
               <Route path="reunioes" element={<ReunioesAdmin />} />
               <Route path="tecnicos" element={<TecnicosAdmin />} />

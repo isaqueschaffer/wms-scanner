@@ -12,6 +12,8 @@ export function DataTable({
   dateKey = null,
   idKey = 'id',
   onDeleteMany = null,
+  // Ações extras sobre as linhas marcadas: { label(qtd), icon, className, confirmMessage(qtd), onRun(ids) }
+  acoesEmLote = [],
   emptyMessage = 'Nenhum registro encontrado.',
   rowClassName = null
 }) {
@@ -23,6 +25,7 @@ export function DataTable({
   const [itensPorPagina, setItensPorPagina] = useState(() => Number(params.get('n')) || POR_PAGINA_PADRAO)
   const [paginaAtual, setPaginaAtual] = useState(() => Number(params.get('p')) || 1)
   const [selecionados, setSelecionados] = useState([])
+  const selecionavel = !!onDeleteMany || acoesEmLote.length > 0
 
   function sincronizarUrl(mudancas) {
     setParams(prev => {
@@ -122,6 +125,13 @@ export function DataTable({
     }
   }
 
+  function executarAcaoEmLote(acao) {
+    if (selecionados.length === 0) return
+    if (acao.confirmMessage && !window.confirm(acao.confirmMessage(selecionados.length))) return
+    acao.onRun(selecionados)
+    setSelecionados([])
+  }
+
   const campoFocoClass = 'focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50'
 
   return (
@@ -171,15 +181,33 @@ export function DataTable({
 
       {/* Ações em Lote (Bulk) */}
       <div className="flex items-center justify-between min-h-[40px]">
-        {onDeleteMany && selecionados.length > 0 ? (
-          <button
-            type="button"
-            onClick={handleExcluirSelecionados}
-            className="flex items-center gap-2 bg-red-500/20 text-red-400 hover:bg-red-500/30 px-4 py-2 rounded-lg text-sm font-bold transition-all border border-red-500/30"
-          >
-            <Trash2 size={16} aria-hidden="true" />
-            Excluir {selecionados.length} {selecionados.length === 1 ? 'selecionado' : 'selecionados'}
-          </button>
+        {selecionavel && selecionados.length > 0 ? (
+          <div className="flex flex-wrap items-center gap-2">
+            {acoesEmLote.map((acao, i) => {
+              const Icone = acao.icon
+              return (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => executarAcaoEmLote(acao)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all border ${acao.className}`}
+                >
+                  {Icone && <Icone size={16} aria-hidden="true" />}
+                  {acao.label(selecionados.length)}
+                </button>
+              )
+            })}
+            {onDeleteMany && (
+              <button
+                type="button"
+                onClick={handleExcluirSelecionados}
+                className="flex items-center gap-2 bg-red-500/20 text-red-400 hover:bg-red-500/30 px-4 py-2 rounded-lg text-sm font-bold transition-all border border-red-500/30"
+              >
+                <Trash2 size={16} aria-hidden="true" />
+                Excluir {selecionados.length} {selecionados.length === 1 ? 'selecionado' : 'selecionados'}
+              </button>
+            )}
+          </div>
         ) : <div />} {/* Espaçador vazio */}
 
         {/* Seletor de Itens por Página */}
@@ -204,7 +232,7 @@ export function DataTable({
         <table className="w-full text-left border-collapse whitespace-nowrap">
           <thead>
             <tr className="bg-[#0f172a] border-b border-[#1e3a5f]">
-              {onDeleteMany && (
+              {selecionavel && (
                 <th scope="col" className="p-4 w-12 text-center">
                   <input
                     type="checkbox"
@@ -225,14 +253,14 @@ export function DataTable({
           <tbody>
             {dadosPaginados.length === 0 ? (
               <tr>
-                <td colSpan={columns.length + (onDeleteMany ? 1 : 0)} className="p-8 text-center text-slate-400">
+                <td colSpan={columns.length + (selecionavel ? 1 : 0)} className="p-8 text-center text-slate-400">
                   {emptyMessage}
                 </td>
               </tr>
             ) : (
               dadosPaginados.map((item, index) => (
                 <tr key={item[idKey] || index} className={`border-b border-[#1e3a5f]/30 transition-colors ${rowClassName ? rowClassName(item) : 'hover:bg-[#1e3a5f]/10'}`}>
-                  {onDeleteMany && (
+                  {selecionavel && (
                     <td className="p-4 text-center">
                       <input
                         type="checkbox"
