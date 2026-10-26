@@ -199,7 +199,8 @@ function EquipamentoFormModal({ isOpen, onClose, projetoId, equipamento, produto
   )
 }
 
-// Retira do projeto um item que não vai mais: por S/N, ou por quantidade nos produtos sem S/N.
+// Retira itens do projeto: escolhe o produto e a quantidade. Nos produtos com S/N, dá para
+// informar um S/N específico; sem ele, saem as unidades sem histórico de técnico (as mais recentes primeiro).
 // A exclusão/atualização em equipamentos já entra na Auditoria.
 function RetirarModal({ isOpen, onClose, equipamentos, produtos, onSaved }) {
   const [ean, setEan] = useState('')
@@ -217,7 +218,9 @@ function RetirarModal({ isOpen, onClose, equipamentos, produtos, onSaved }) {
   ).sort((a, b) => a.nome.localeCompare(b.nome))
 
   const semSn = produtos.find(p => p.ean === ean)?.controla_sn === false
-  const linhaSemSn = semSn ? equipamentos.find(eq => eq.ean === ean && !eq.sn) : null
+  const linhas = equipamentos.filter(eq => eq.ean === ean)
+  const disponivel = linhas.reduce((total, eq) => total + (eq.quantidade || 1), 0)
+  const porSn = !semSn && sn.trim() !== ''
 
   useEffect(() => {
     if (!isOpen) return
@@ -234,43 +237,51 @@ function RetirarModal({ isOpen, onClose, equipamentos, produtos, onSaved }) {
       return
     }
 
-    let linha
     let qtd = 1
-    if (semSn) {
+    let alvos // linhas que saem inteiras
+    let parcial = null // linha sem S/N que só perde quantidade
+    if (porSn) {
+      const snLimpo = sn.trim().toLowerCase()
+      const linha = linhas.find(eq => eq.sn?.toLowerCase() === snLimpo)
+      if (!linha) {
+        setErro(`O S/N "${sn.trim()}" não está neste projeto para o produto selecionado.`)
+        return
+      }
+      alvos = [linha]
+    } else {
       qtd = parseInt(quantidade, 10)
       if (!qtd || qtd < 1) {
         setErro('Informe uma quantidade maior que zero.')
         return
       }
-      linha = linhaSemSn
-      if (qtd > (linha?.quantidade || 0)) {
-        setErro(`O projeto tem apenas ${linha?.quantidade || 0} unidade(s) deste produto.`)
+      if (qtd > disponivel) {
+        setErro(`O projeto tem apenas ${disponivel} unidade(s) deste produto.`)
         return
       }
-    } else {
-      const snLimpo = sn.trim().toLowerCase()
-      if (!snLimpo) {
-        setErro('Informe o S/N.')
-        return
-      }
-      linha = equipamentos.find(eq => eq.ean === ean && eq.sn?.toLowerCase() === snLimpo)
-      if (!linha) {
-        setErro(`O S/N "${sn.trim()}" não está neste projeto para o produto selecionado.`)
-        return
+      if (semSn) {
+        const linha = linhas[0]
+        if (qtd < linha.quantidade) parcial = linha
+        else alvos = [linha]
+      } else {
+        // Sem histórico de técnico primeiro; entre iguais, os bipados por último
+        alvos = [...linhas]
+          .sort((a, b) =>
+            (a.alocacao_equipamentos?.length > 0) - (b.alocacao_equipamentos?.length > 0) ||
+            new Date(b.created_at) - new Date(a.created_at))
+          .slice(0, qtd)
       }
     }
 
-    if (linha.alocacao_equipamentos?.length > 0 &&
-      !window.confirm('Este item tem histórico de retirada por técnico, que também será apagado. Continuar?')) {
+    if (alvos?.some(eq => eq.alocacao_equipamentos?.length > 0) &&
+      !window.confirm('Algum item tem histórico de retirada por técnico, que também será apagado. Continuar?')) {
       return
     }
 
     setSaving(true)
     setErro('')
-    const restante = (linha.quantidade || 1) - qtd
-    const { error } = restante > 0
-      ? await supabase.from('equipamentos').update({ quantidade: restante }).eq('id', linha.id)
-      : await supabase.from('equipamentos').delete().eq('id', linha.id)
+    const { error } = parcial
+      ? await supabase.from('equipamentos').update({ quantidade: parcial.quantidade - qtd }).eq('id', parcial.id)
+      : await supabase.from('equipamentos').delete().in('id', alvos.map(eq => eq.id))
     setSaving(false)
 
     if (error) {
@@ -295,7 +306,7 @@ function RetirarModal({ isOpen, onClose, equipamentos, produtos, onSaved }) {
             ))}
           </select>
         </Field>
-        {semSn ? (
+        {ean && (
           <div>
             <Field label="Quantidade a retirar" labelClassName={labelClass}>
               <input
@@ -303,22 +314,29 @@ function RetirarModal({ isOpen, onClose, equipamentos, produtos, onSaved }) {
                 type="number"
                 inputMode="numeric"
                 min={1}
-                max={linhaSemSn?.quantidade}
+                max={disponivel}
                 step={1}
                 autoComplete="off"
-                value={quantidade}
+                value={porSn ? '1' : quantidade}
                 onChange={e => setQuantidade(e.target.value)}
-                className={`${inputClass} font-mono`}
+                disabled={porSn}
+                className={`${inputClass} font-mono disabled:opacity-60`}
               />
             </Field>
             <p className="text-xs text-slate-400 mt-1.5">
-              O projeto tem {linhaSemSn?.quantidade || 0} unidade(s) deste produto.
+              O projeto tem {disponivel} unidade(s) deste produto.
             </p>
           </div>
-        ) : (
-          <Field label="S/N" labelClassName={labelClass}>
-            <input name="sn" value={sn} onChange={e => setSn(e.target.value)} autoComplete="off" autoCapitalize="none" autoCorrect="off" spellCheck={false} className={`${inputClass} font-mono`} placeholder="Número de série" />
-          </Field>
+        )}
+        {ean && !semSn && (
+          <div>
+            <Field label="S/N específico (opcional)" labelClassName={labelClass}>
+              <input name="sn" value={sn} onChange={e => setSn(e.target.value)} autoComplete="off" autoCapitalize="none" autoCorrect="off" spellCheck={false} className={`${inputClass} font-mono`} placeholder="Número de série" />
+            </Field>
+            <p className="text-xs text-slate-400 mt-1.5">
+              Deixe em branco para retirar a quantidade acima (saem as unidades mais recentes, sem histórico de técnico primeiro).
+            </p>
+          </div>
         )}
 
         {erro && <p role="alert" className="text-sm text-red-400">{erro}</p>}
