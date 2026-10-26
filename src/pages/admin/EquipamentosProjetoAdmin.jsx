@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
-import { Loader2, ArrowLeft, Trash2, UserCheck, FileText, Plus, Pencil } from 'lucide-react'
+import { Loader2, ArrowLeft, Trash2, UserCheck, FileText, Plus, Minus, Pencil } from 'lucide-react'
 import { DataTable } from '../../components/ui/DataTable'
 import { Modal } from '../../components/ui/Modal'
 import { Field } from '../../components/ui/Field'
@@ -199,6 +199,144 @@ function EquipamentoFormModal({ isOpen, onClose, projetoId, equipamento, produto
   )
 }
 
+// Retira do projeto um item que não vai mais: por S/N, ou por quantidade nos produtos sem S/N.
+// A exclusão/atualização em equipamentos já entra na Auditoria.
+function RetirarModal({ isOpen, onClose, equipamentos, produtos, onSaved }) {
+  const [ean, setEan] = useState('')
+  const [sn, setSn] = useState('')
+  const [quantidade, setQuantidade] = useState('1')
+  const [saving, setSaving] = useState(false)
+  const [erro, setErro] = useState('')
+
+  // Só os produtos que o projeto realmente tem
+  const nosProjeto = Object.values(
+    equipamentos.reduce((acc, eq) => {
+      acc[eq.ean] ??= { ean: eq.ean, nome: eq.produtos?.nome || 'Desconhecido' }
+      return acc
+    }, {}),
+  ).sort((a, b) => a.nome.localeCompare(b.nome))
+
+  const semSn = produtos.find(p => p.ean === ean)?.controla_sn === false
+  const linhaSemSn = semSn ? equipamentos.find(eq => eq.ean === ean && !eq.sn) : null
+
+  useEffect(() => {
+    if (!isOpen) return
+    setEan('')
+    setSn('')
+    setQuantidade('1')
+    setErro('')
+  }, [isOpen])
+
+  async function handleSubmit(e) {
+    e.preventDefault()
+    if (!ean) {
+      setErro('Selecione o produto.')
+      return
+    }
+
+    let linha
+    let qtd = 1
+    if (semSn) {
+      qtd = parseInt(quantidade, 10)
+      if (!qtd || qtd < 1) {
+        setErro('Informe uma quantidade maior que zero.')
+        return
+      }
+      linha = linhaSemSn
+      if (qtd > (linha?.quantidade || 0)) {
+        setErro(`O projeto tem apenas ${linha?.quantidade || 0} unidade(s) deste produto.`)
+        return
+      }
+    } else {
+      const snLimpo = sn.trim().toLowerCase()
+      if (!snLimpo) {
+        setErro('Informe o S/N.')
+        return
+      }
+      linha = equipamentos.find(eq => eq.ean === ean && eq.sn?.toLowerCase() === snLimpo)
+      if (!linha) {
+        setErro(`O S/N "${sn.trim()}" não está neste projeto para o produto selecionado.`)
+        return
+      }
+    }
+
+    if (linha.alocacao_equipamentos?.length > 0 &&
+      !window.confirm('Este item tem histórico de retirada por técnico, que também será apagado. Continuar?')) {
+      return
+    }
+
+    setSaving(true)
+    setErro('')
+    const restante = (linha.quantidade || 1) - qtd
+    const { error } = restante > 0
+      ? await supabase.from('equipamentos').update({ quantidade: restante }).eq('id', linha.id)
+      : await supabase.from('equipamentos').delete().eq('id', linha.id)
+    setSaving(false)
+
+    if (error) {
+      setErro(error.message)
+      return
+    }
+    onSaved()
+    onClose()
+  }
+
+  const inputClass = 'w-full bg-[#0f172a] border border-[#1e3a5f] rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-blue-500'
+  const labelClass = 'block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5'
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="Retirar do projeto">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <Field label="Produto" labelClassName={labelClass}>
+          <select name="produto" value={ean} onChange={e => setEan(e.target.value)} className={inputClass}>
+            <option value="">Selecione…</option>
+            {nosProjeto.map(p => (
+              <option key={p.ean} value={p.ean}>{p.nome} ({p.ean})</option>
+            ))}
+          </select>
+        </Field>
+        {semSn ? (
+          <div>
+            <Field label="Quantidade a retirar" labelClassName={labelClass}>
+              <input
+                name="quantidade"
+                type="number"
+                inputMode="numeric"
+                min={1}
+                max={linhaSemSn?.quantidade}
+                step={1}
+                autoComplete="off"
+                value={quantidade}
+                onChange={e => setQuantidade(e.target.value)}
+                className={`${inputClass} font-mono`}
+              />
+            </Field>
+            <p className="text-xs text-slate-400 mt-1.5">
+              O projeto tem {linhaSemSn?.quantidade || 0} unidade(s) deste produto.
+            </p>
+          </div>
+        ) : (
+          <Field label="S/N" labelClassName={labelClass}>
+            <input name="sn" value={sn} onChange={e => setSn(e.target.value)} autoComplete="off" autoCapitalize="none" autoCorrect="off" spellCheck={false} className={`${inputClass} font-mono`} placeholder="Número de série" />
+          </Field>
+        )}
+
+        {erro && <p role="alert" className="text-sm text-red-400">{erro}</p>}
+
+        <div className="flex justify-end gap-3 pt-2">
+          <button type="button" onClick={onClose} className="px-5 py-2.5 rounded-xl bg-slate-800 text-slate-300 font-semibold hover:bg-slate-700">
+            Cancelar
+          </button>
+          <button type="submit" disabled={saving} className="px-5 py-2.5 rounded-xl bg-red-600 text-white font-bold hover:bg-red-500 disabled:opacity-60 flex items-center gap-2">
+            {saving && <Loader2 size={16} className="animate-spin" />}
+            Retirar
+          </button>
+        </div>
+      </form>
+    </Modal>
+  )
+}
+
 export function EquipamentosProjetoAdmin() {
   const { id } = useParams() // ID do projeto
   const [projeto, setProjeto] = useState(null)
@@ -208,6 +346,7 @@ export function EquipamentosProjetoAdmin() {
   const [reportModalOpen, setReportModalOpen] = useState(false)
   const [produtos, setProdutos] = useState([])
   const [formModal, setFormModal] = useState({ open: false, equipamento: null })
+  const [retirarOpen, setRetirarOpen] = useState(false)
 
   useDocumentTitle(projeto?.nome)
 
@@ -325,6 +464,13 @@ export function EquipamentosProjetoAdmin() {
         >
           <Plus size={18} /> Adicionar Equipamento
         </button>
+        <button
+          onClick={() => setRetirarOpen(true)}
+          disabled={equipamentos.length === 0}
+          className="w-full md:w-auto flex justify-center items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-xl font-bold transition-all shadow-lg shadow-red-600/20 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <Minus size={18} /> Retirar do Projeto
+        </button>
         <button 
           onClick={() => setReportModalOpen(true)}
           className="w-full md:w-auto flex justify-center items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold transition-all shadow-lg shadow-blue-600/20"
@@ -412,6 +558,14 @@ export function EquipamentosProjetoAdmin() {
         onClose={() => setFormModal({ open: false, equipamento: null })}
         projetoId={id}
         equipamento={formModal.equipamento}
+        produtos={produtos}
+        onSaved={fetchDados}
+      />
+
+      <RetirarModal
+        isOpen={retirarOpen}
+        onClose={() => setRetirarOpen(false)}
+        equipamentos={equipamentos}
         produtos={produtos}
         onSaved={fetchDados}
       />
