@@ -15,6 +15,7 @@ const pagina = (carregar, nome) => lazy(() => carregar().then(m => ({ default: m
 
 const SetupScreen = pagina(() => import('./components/scanner/SetupScreen'), 'SetupScreen')
 const Scanner = pagina(() => import('./components/scanner/Scanner'), 'Scanner')
+const RetiradaScanner = pagina(() => import('./components/scanner/RetiradaScanner'), 'RetiradaScanner')
 const ClientesAdmin = pagina(() => import('./pages/admin/ClientesAdmin'), 'ClientesAdmin')
 const ProjetosAdmin = pagina(() => import('./pages/admin/ProjetosAdmin'), 'ProjetosAdmin')
 const ProdutosAdmin = pagina(() => import('./pages/admin/ProdutosAdmin'), 'ProdutosAdmin')
@@ -55,6 +56,8 @@ export default function App() {
 
             {/* Rotas Protegidas */}
             <Route path="/" element={<ProtectedRoute><ScannerApp /></ProtectedRoute>} />
+
+            <Route path="/retirar/:id" element={<ProtectedRoute><RetiradaScanner /></ProtectedRoute>} />
 
             <Route path="/admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
               <Route index element={<Navigate to="/admin/clientes" replace />} />
