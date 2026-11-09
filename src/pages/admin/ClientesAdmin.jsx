@@ -135,7 +135,7 @@ export function ClientesAdmin() {
         ) : (
           <DataTable
             data={clientes}
-            searchKeys={['nome', 'razao_social', 'cnpj_cpf']}
+            searchKeys={['nome', 'razao_social', 'cnpj_cpf', 'cidade', 'estado']}
             onDeleteMany={handleDeleteMany}
             emptyMessage="Nenhum cliente encontrado."
             columns={[
@@ -156,6 +156,16 @@ export function ClientesAdmin() {
                 ),
               },
               { key: 'cnpj_cpf', label: 'CNPJ/CPF', render: (c) => <span className="font-mono text-sm text-slate-300">{formatarCnpjCpf(c.cnpj_cpf) || '—'}</span> },
+              {
+                key: 'cidade',
+                label: 'Cidade',
+                render: (c) => (
+                  <span className="text-sm text-slate-300">
+                    {c.cidade ? `${c.cidade}${c.estado ? `/${c.estado}` : ''}` : '—'}
+                  </span>
+                ),
+                sortValue: (c) => c.cidade || ''
+              },
               {
                 key: 'omie_codigo',
                 label: 'Omie',

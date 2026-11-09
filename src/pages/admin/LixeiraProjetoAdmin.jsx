@@ -160,6 +160,7 @@ export function LixeiraProjetoAdmin() {
             {
               key: 'produto',
               label: 'Produto',
+              sortValue: item => produtos[item.ean] || '',
               render: item => <span className="font-semibold text-white">{produtos[item.ean] || 'Desconhecido'}</span>,
             },
             {
