@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Search, ChevronLeft, ChevronRight, Calendar, Trash2, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react'
 
@@ -103,6 +103,7 @@ export function DataTable({
   const [direcaoOrdenacao, setDirecaoOrdenacao] = useState(() => params.get('dir') ?? defaultSortDir)
   const [selecionados, setSelecionados] = useState([])
   const selecionavel = !!onDeleteMany || acoesEmLote.length > 0
+  const checkTodosRef = useRef(null)
 
   function sincronizarUrl(mudancas) {
     setParams(prev => {
@@ -241,8 +242,8 @@ export function DataTable({
 
   // 4. Seleção de Checkboxes
   const toggleSelecionarTudo = () => {
-    if (selecionados.length === dadosPaginados.length && dadosPaginados.length > 0) {
-      setSelecionados([]) // Desmarca tudo da página atual
+    if (todosMarcados || algunsMarcados) {
+      setSelecionados([]) // Desmarca tudo
     } else {
       setSelecionados(dadosPaginados.map(item => item[idKey]))
     }
@@ -270,6 +271,12 @@ export function DataTable({
     acao.onRun(selecionados)
     setSelecionados([])
   }
+
+  const todosMarcados = dadosPaginados.length > 0 && dadosPaginados.every(item => selecionados.includes(item[idKey]))
+  const algunsMarcados = !todosMarcados && dadosPaginados.some(item => selecionados.includes(item[idKey]))
+  useEffect(() => {
+    if (checkTodosRef.current) checkTodosRef.current.indeterminate = algunsMarcados
+  }, [algunsMarcados])
 
   const campoFocoClass = 'focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50'
   const colunaOrdenadaAtual = colunasSortaveis.find(c => (c.sortKey || c.key) === colunaOrdenacao)
@@ -321,7 +328,10 @@ export function DataTable({
       {/* Ações em Lote (Bulk) e Controles de Ordenação/Exibição */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 min-h-[40px]">
         {selecionavel && selecionados.length > 0 ? (
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 bg-blue-500/10 border border-blue-500/30 rounded-xl pl-4 pr-2 py-2">
+            <span className="text-sm font-semibold text-blue-300 tabular-nums mr-1">
+              {selecionados.length} {selecionados.length === 1 ? 'selecionado' : 'selecionados'}
+            </span>
             {acoesEmLote.map((acao, i) => {
               const Icone = acao.icon
               return (
@@ -343,9 +353,16 @@ export function DataTable({
                 className="flex items-center gap-2 bg-red-500/20 text-red-400 hover:bg-red-500/30 px-4 py-2 rounded-lg text-sm font-bold transition-all border border-red-500/30"
               >
                 <Trash2 size={16} aria-hidden="true" />
-                Excluir {selecionados.length} {selecionados.length === 1 ? 'selecionado' : 'selecionados'}
+                Excluir
               </button>
             )}
+            <button
+              type="button"
+              onClick={() => setSelecionados([])}
+              className="px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-white/10 transition-colors"
+            >
+              Limpar
+            </button>
           </div>
         ) : <div />}
 
@@ -406,18 +423,18 @@ export function DataTable({
       </div>
 
       {/* Tabela */}
-      <div className="bg-[#111827] border border-[#1e3a5f] rounded-2xl overflow-x-auto shadow-2xl">
-        <table className="w-full text-left border-collapse whitespace-nowrap">
+      <div className="bg-[#111827] border border-[#1e3a5f] rounded-2xl overflow-x-auto shadow-xl">
+        <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-[#0f172a] border-b border-[#1e3a5f]">
               {selecionavel && (
-                <th scope="col" className="p-4 w-12 text-center">
+                <th scope="col" className="py-3 pl-4 pr-2 w-10 text-center">
                   <input
                     type="checkbox"
                     aria-label="Selecionar todos desta página"
-                    checked={selecionados.length === dadosPaginados.length && dadosPaginados.length > 0}
+                    ref={checkTodosRef}
+                    checked={todosMarcados}
                     onChange={toggleSelecionarTudo}
-                    className="w-4 h-4 rounded bg-[#0a0e1a] border-[#1e3a5f] text-blue-600 focus:ring-blue-500/50 cursor-pointer"
                   />
                 </th>
               )}
@@ -435,7 +452,7 @@ export function DataTable({
                         ? (direcaoOrdenacao === 'asc' ? 'ascending' : 'descending')
                         : (sortavel ? 'none' : undefined)
                     }
-                    className={`p-4 text-xs font-bold uppercase tracking-widest text-slate-400 ${col.className || ''}`}
+                    className={`px-3 py-3 sm:px-4 text-xs font-bold uppercase tracking-wider text-slate-400 align-middle ${col.className || ''}`}
                   >
                     {sortavel ? (
                       <button
@@ -476,20 +493,19 @@ export function DataTable({
               </tr>
             ) : (
               dadosPaginados.map((item, index) => (
-                <tr key={item[idKey] || index} className={`border-b border-[#1e3a5f]/30 transition-colors ${rowClassName ? rowClassName(item) : 'hover:bg-[#1e3a5f]/10'}`}>
+                <tr key={item[idKey] || index} className={`border-b border-[#1e3a5f]/30 transition-colors ${selecionados.includes(item[idKey]) ? 'bg-blue-500/10' : rowClassName ? rowClassName(item) : 'hover:bg-[#1e3a5f]/10'}`}>
                   {selecionavel && (
-                    <td className="p-4 text-center">
+                    <td className="py-3 pl-4 pr-2 text-center">
                       <input
                         type="checkbox"
                         aria-label="Selecionar linha"
                         checked={selecionados.includes(item[idKey])}
                         onChange={() => toggleSelecionarLinha(item[idKey])}
-                        className="w-4 h-4 rounded bg-[#0a0e1a] border-[#1e3a5f] text-blue-600 focus:ring-blue-500/50 cursor-pointer"
                       />
                     </td>
                   )}
                   {columns.map((col, idx) => (
-                    <td key={idx} className={`p-4 ${col.tdClassName || ''}`}>
+                    <td key={idx} className={`px-3 py-3 sm:px-4 text-sm align-middle break-words ${col.tdClassName || ''}`}>
                       {col.render ? col.render(item) : item[col.key]}
                     </td>
                   ))}
