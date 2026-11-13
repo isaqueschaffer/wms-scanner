@@ -10,7 +10,7 @@ import * as XLSX from 'xlsx'
 import { Link } from 'react-router-dom'
 import {
   Barcode, Hash, Package, Lock, Unlock, Download, List,
-  CheckCircle2, RotateCcw, Loader2, Pencil, Trash2, Check, X,
+  CheckCircle2, RotateCcw, Loader2, Pencil, Trash2, Check, X, Tag,
 } from 'lucide-react'
 
 // ─── Constantes de fase ───────────────────────────────────────────────────────
@@ -113,6 +113,25 @@ function descreverPadrao(p) {
   return txt
 }
 
+// Caixa de seleção "cadastrar patrimônio + serial"
+function OpcaoPatrimonio({ ligado, onChange }) {
+  return (
+    <label className="mt-4 flex items-center gap-3 px-3 py-3 rounded-xl border border-slate-700 bg-[#0f172a] cursor-pointer select-none hover:border-amber-500/50 transition-colors">
+      <input
+        type="checkbox"
+        name="com_patrimonio"
+        checked={ligado}
+        onChange={e => onChange(e.target.checked)}
+        className="w-5 h-5 accent-amber-500 cursor-pointer"
+      />
+      <span className="flex flex-col">
+        <span className="text-sm font-bold text-slate-200">Cadastrar patrimônio + serial</span>
+        <span className="text-xs text-slate-400">Depois de bipar cada S/N, digite o nº de patrimônio à mão.</span>
+      </span>
+    </label>
+  )
+}
+
 export function Scanner({ session, onReset }) {
   const { playSuccess, playError } = useAudio()
   const { toasts, addToast } = useToast()
@@ -134,6 +153,9 @@ export function Scanner({ session, onReset }) {
   const [editing, setEditing] = useState(null)               // { id, value }
   const [editSaving, setEditSaving] = useState(false)
   const [produtosCadastrados, setProdutosCadastrados] = useState([]) // Para escolha manual
+  const [comPatrimonio, setComPatrimonio] = useState(false)  // cadastrar patrimônio junto com o S/N
+  const [snPendente, setSnPendente] = useState(null)         // S/N bipado esperando o patrimônio
+  const [patrimonioValue, setPatrimonioValue] = useState('')
 
   // ── Buscar produtos ao montar ──────────────────────────────────────────────
   useEffect(() => {
@@ -150,6 +172,8 @@ export function Scanner({ session, onReset }) {
   const eanRef = useRef(null)
   const qtyRef = useRef(null)
   const snRef  = useRef(null)
+  const patrimonioRef = useRef(null)
+  const snPendenteRef = useRef(null)
   const queueRef = useRef([])
   // Aprendizado do padrão: recentes = últimas formas aceitas; padrao = forma fixada
   const aprendizadoRef = useRef({ recentes: [], padrao: null })
@@ -193,7 +217,25 @@ export function Scanner({ session, onReset }) {
     queueRef.current = []
     setPendingCount(0)
     setProductModal(null)
+    limparSnPendente()
     resetarPadrao()
+  }
+
+  function limparSnPendente() {
+    snPendenteRef.current = null
+    setSnPendente(null)
+    setPatrimonioValue('')
+  }
+
+  // Foco no campo certo da fase SN: patrimônio se há S/N esperando, senão S/N
+  function focarEntradaSn() {
+    setTimeout(() => (snPendenteRef.current ? patrimonioRef : snRef).current?.focus(), 30)
+  }
+
+  function alternarPatrimonio(ligado) {
+    setComPatrimonio(ligado)
+    if (!ligado) limparSnPendente()
+    if (phase === PHASE.SN) focarEntradaSn()
   }
 
   function resetarPadrao() {
@@ -266,6 +308,7 @@ export function Scanner({ session, onReset }) {
     setLockedProduct(product)
     setReadCount(0)
     setHistory([])
+    limparSnPendente()
     resetarPadrao()
     setPhase(PHASE.QTY)
   }
@@ -312,6 +355,13 @@ export function Scanner({ session, onReset }) {
     setSnValue('')
     if (!sn) return
 
+    if (comPatrimonio && snPendenteRef.current) {
+      playError()
+      addToast({ type: 'warning', message: `Digite o patrimônio do S/N ${snPendenteRef.current} antes de bipar outro.`, duration: 4000 })
+      focarEntradaSn()
+      return
+    }
+
     const erro = validarSn(sn, lockedProduct.ean, eansConhecidos) ?? checarPadrao(sn, false)
     if (erro) {
       playError()
@@ -320,7 +370,45 @@ export function Scanner({ session, onReset }) {
     }
     checarPadrao(sn, true)
 
-    queueRef.current.push({ sn, ean: lockedProduct.ean, projetoId: session.projetoId })
+    if (comPatrimonio) {
+      // Guarda o S/N e pede o patrimônio digitado antes de gravar
+      snPendenteRef.current = sn
+      setSnPendente(sn)
+      setPatrimonioValue('')
+      focarEntradaSn()
+      return
+    }
+
+    enfileirar(sn, null)
+  }
+
+  function handlePatrimonioEnter(rawValue) {
+    const sn = snPendenteRef.current
+    if (!sn) return
+    const patrimonio = (rawValue ?? patrimonioValue).trim()
+    if (!patrimonio) {
+      addToast({ type: 'warning', message: 'Digite o nº de patrimônio (Esc cancela este S/N).' })
+      return
+    }
+    const repetido = history.some(h => h.patrimonio === patrimonio)
+      || queueRef.current.some(q => q.patrimonio === patrimonio)
+    if (repetido) {
+      playError()
+      addToast({ type: 'error', message: `⚠ Patrimônio ${patrimonio} já foi usado nesta caixa.`, duration: 4000 })
+      return
+    }
+    limparSnPendente()
+    enfileirar(sn, patrimonio)
+    setTimeout(() => snRef.current?.focus(), 30)
+  }
+
+  function cancelarSnPendente() {
+    limparSnPendente()
+    setTimeout(() => snRef.current?.focus(), 30)
+  }
+
+  function enfileirar(sn, patrimonio) {
+    queueRef.current.push({ sn, patrimonio, ean: lockedProduct.ean, projetoId: session.projetoId })
     setPendingCount(queueRef.current.length)
     processQueue()
   }
@@ -335,7 +423,7 @@ export function Scanner({ session, onReset }) {
       // Uma ida ao banco só: o índice único (projeto_id, sn) já barra duplicata
       const { data, error } = await supabase
         .from('equipamentos')
-        .insert({ projeto_id: item.projetoId, ean: item.ean, sn: item.sn })
+        .insert({ projeto_id: item.projetoId, ean: item.ean, sn: item.sn, n_patrimonio: item.patrimonio })
         .select('id')
         .single()
 
@@ -351,13 +439,13 @@ export function Scanner({ session, onReset }) {
       playSuccess()
       setReadCount(c => c + 1)
       setHistory(prev => [
-        { id: data.id, sn: item.sn, time: new Date().toLocaleTimeString('pt-BR') },
+        { id: data.id, sn: item.sn, patrimonio: item.patrimonio, time: new Date().toLocaleTimeString('pt-BR') },
         ...prev,
       ].slice(0, HISTORY_LIMIT))
     }
 
     workingRef.current = false
-    setTimeout(() => snRef.current?.focus(), 30)
+    focarEntradaSn()
   }
 
   function mensagemErroSn(error, sn) {
@@ -434,7 +522,7 @@ export function Scanner({ session, onReset }) {
     setExporting(true)
     const { data, error } = await supabase
       .from('equipamentos')
-      .select('id, sn, ean, created_at, produtos(nome)')
+      .select('id, sn, ean, n_patrimonio, created_at, produtos(nome)')
       .eq('projeto_id', session.projetoId)
       .order('created_at', { ascending: true })
 
@@ -448,11 +536,12 @@ export function Scanner({ session, onReset }) {
       EAN:         eq.ean,
       'Produto':   eq.produtos?.nome ?? '',
       'Serial':    eq.sn,
+      'Patrimônio': eq.n_patrimonio ?? '',
       'Data/Hora': new Date(eq.created_at).toLocaleString('pt-BR'),
     }))
 
     const ws = XLSX.utils.json_to_sheet(rows)
-    ws['!cols'] = [{ wch: 18 }, { wch: 35 }, { wch: 25 }, { wch: 22 }]
+    ws['!cols'] = [{ wch: 18 }, { wch: 35 }, { wch: 25 }, { wch: 18 }, { wch: 22 }]
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, 'Equipamentos')
     XLSX.writeFile(wb, `${session.projetoNome.replace(/\s+/g, '_')}_equipamentos.xlsx`)
@@ -645,6 +734,7 @@ export function Scanner({ session, onReset }) {
                 "
               />
               <p className="text-xs text-slate-400 mt-2 text-center">Digite a quantidade e pressione Enter</p>
+              <OpcaoPatrimonio ligado={comPatrimonio} onChange={alternarPatrimonio} />
             </div>
           )}
 
@@ -704,6 +794,43 @@ export function Scanner({ session, onReset }) {
                   tracking-widest transition-all
                 "
               />
+
+              {snPendente && (
+                <div className="mt-4">
+                  <label htmlFor="input-patrimonio" className="flex items-center gap-2 mb-2">
+                    <Tag size={16} className="text-amber-400" aria-hidden="true" />
+                    <span className="text-sm font-bold text-amber-300 uppercase tracking-widest">Nº de Patrimônio</span>
+                  </label>
+                  <p className="text-xs text-slate-400 mb-2">
+                    S/N <span className="font-mono text-green-300 break-all">{snPendente}</span> — digite o patrimônio e pressione Enter (Esc cancela).
+                  </p>
+                  <input
+                    id="input-patrimonio"
+                    ref={patrimonioRef}
+                    type="text"
+                    name="patrimonio"
+                    value={patrimonioValue}
+                    onChange={e => setPatrimonioValue(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Escape') { e.preventDefault(); cancelarSnPendente(); return }
+                      handleKeyDown(e, handlePatrimonioEnter)
+                    }}
+                    placeholder="Digite o patrimônio…"
+                    autoComplete="off"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    className="
+                      w-full px-5 py-4 rounded-xl bg-[#0f172a] border-2 border-amber-500/50
+                      text-white placeholder-slate-600 text-2xl font-mono font-bold
+                      focus:outline-none focus:border-amber-400 input-active
+                      tracking-widest transition-all
+                    "
+                  />
+                </div>
+              )}
+
+              <OpcaoPatrimonio ligado={comPatrimonio} onChange={alternarPatrimonio} />
             </div>
           )}
 
@@ -752,6 +879,9 @@ export function Scanner({ session, onReset }) {
             <div className="bg-[#111827] border border-green-800/40 rounded-2xl p-4">
               <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Último Bipe</p>
               <p className="font-mono text-green-300 font-bold text-lg break-all leading-snug">{history[0].sn}</p>
+              {history[0].patrimonio && (
+                <p className="font-mono text-amber-300 text-sm break-all">Patrimônio: {history[0].patrimonio}</p>
+              )}
               <p className="text-slate-400 text-xs mt-1 tabular-nums">{history[0].time}</p>
             </div>
           )}
@@ -795,6 +925,7 @@ export function Scanner({ session, onReset }) {
                       <>
                         <div className="min-w-0">
                           <span className="font-mono text-slate-300 text-xs break-all">{h.sn}</span>
+                          {h.patrimonio && <span className="font-mono text-amber-300 text-xs ml-2 break-all">Pat. {h.patrimonio}</span>}
                           <span className="text-slate-400 text-xs ml-2 tabular-nums">{h.time}</span>
                         </div>
                         <div className="flex items-center shrink-0">
