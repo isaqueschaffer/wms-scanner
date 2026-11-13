@@ -5,6 +5,8 @@ import { Loader2, ArrowLeft, Trash2, UserCheck, FileText, Plus, Minus, Pencil, T
 import { DataTable } from '../../components/ui/DataTable'
 import { Modal } from '../../components/ui/Modal'
 import { Field } from '../../components/ui/Field'
+import { SearchSelect } from '../../components/ui/SearchSelect'
+import { opcoesProdutos } from '../../components/ui/opcoesBusca'
 import { Breadcrumb } from '../../components/ui/Breadcrumb'
 import { useDocumentTitle } from '../../hooks/useDocumentTitle'
 
@@ -141,12 +143,15 @@ function EquipamentoFormModal({ isOpen, onClose, projetoId, equipamento, produto
     <Modal isOpen={isOpen} onClose={onClose} title={equipamento ? 'Editar equipamento' : 'Adicionar equipamento'}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <Field label="Produto" labelClassName={labelClass}>
-          <select name="produto" value={ean} onChange={e => setEan(e.target.value)} className={inputClass}>
-            <option value="">Selecione…</option>
-            {produtos.map(p => (
-              <option key={p.ean} value={p.ean}>{p.nome} ({p.ean})</option>
-            ))}
-          </select>
+          <SearchSelect
+            name="produto"
+            value={ean}
+            onChange={setEan}
+            options={opcoesProdutos(produtos)}
+            placeholder="Selecione…"
+            vazio="Nenhum produto encontrado"
+            className={inputClass}
+          />
         </Field>
         {semSn ? (
           <div>
@@ -279,7 +284,7 @@ export function EquipamentosProjetoAdmin() {
   }, [id])
 
   useEffect(() => {
-    supabase.from('produtos').select('ean, nome, controla_sn').order('nome').then(({ data }) => {
+    supabase.from('produtos').select('ean, nome, codigo, unidade, ncm, controla_sn').order('nome').then(({ data }) => {
       if (data) setProdutos(data)
     })
   }, [])

@@ -5,6 +5,8 @@ import { Modal } from '../../components/ui/Modal'
 import { Field } from '../../components/ui/Field'
 import { DataTable } from '../../components/ui/DataTable'
 import { Breadcrumb } from '../../components/ui/Breadcrumb'
+import { SearchSelect } from '../../components/ui/SearchSelect'
+import { opcoesClientes } from '../../components/ui/opcoesBusca'
 import { Pencil, Trash2, Plus, Loader2, List, MapPin, Building2, Search, LayoutGrid, Rows3 } from 'lucide-react'
 
 const SERVICOS_DISPONIVEIS = [
@@ -71,7 +73,7 @@ export function ProjetosAdmin() {
     setLoading(true)
     const [resProj, resCli] = await Promise.all([
       supabase.from('projetos').select('*, clientes(nome)').order('nome'),
-      supabase.from('clientes').select('id, nome, cidade, estado').order('nome')
+      supabase.from('clientes').select('id, nome, razao_social, cnpj_cpf, email, cidade, estado').order('nome')
     ])
     setProjetos(resProj.data || [])
     setClientes(resCli.data || [])
@@ -384,19 +386,15 @@ export function ProjetosAdmin() {
       <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={editId ? 'Editar Projeto' : 'Novo Projeto'}>
         <form onSubmit={handleSave} className="space-y-4">
           <Field label="Cliente">
-            <select
+            <SearchSelect
               name="cliente"
               value={clienteId}
-              onChange={e => setClienteId(e.target.value)}
+              onChange={setClienteId}
+              options={opcoesClientes(clientes)}
+              placeholder="— Selecione o cliente —"
+              vazio="Nenhum cliente encontrado"
               className="w-full px-4 py-3 rounded-xl bg-[#0f172a] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500"
-            >
-              <option value="">— Selecione o cliente —</option>
-              {clientes.map(c => (
-                <option key={c.id} value={c.id}>
-                  {c.nome}{c.estado ? ` (${c.estado.toUpperCase()})` : ''}
-                </option>
-              ))}
-            </select>
+            />
           </Field>
           <Field label="Nome do Projeto">
             <input

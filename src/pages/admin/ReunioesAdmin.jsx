@@ -3,6 +3,8 @@ import { supabase } from '../../lib/supabase'
 import { Loader2, Plus, Pencil, Trash2, CalendarDays } from 'lucide-react'
 import { Modal } from '../../components/ui/Modal'
 import { Field } from '../../components/ui/Field'
+import { SearchSelect } from '../../components/ui/SearchSelect'
+import { opcoesProjetos } from '../../components/ui/opcoesBusca'
 import { DataTable } from '../../components/ui/DataTable'
 
 export function ReunioesAdmin() {
@@ -24,7 +26,7 @@ export function ReunioesAdmin() {
 
   useEffect(() => {
     async function init() {
-      const { data } = await supabase.from('projetos').select('id, nome, clientes(nome)').order('nome')
+      const { data } = await supabase.from('projetos').select('id, nome, servicos, clientes(nome, razao_social, cnpj_cpf, cidade, estado)').order('nome')
       setProjetos(data || [])
       setLoadingProjetos(false)
     }
@@ -108,18 +110,17 @@ export function ReunioesAdmin() {
         
         <div className="flex items-center gap-4 w-full md:w-auto">
           {loadingProjetos ? <Loader2 className="animate-spin text-blue-500" aria-label="Carregando projetos" role="status" /> : (
-            <select
+            <SearchSelect
               name="projeto_id"
               aria-label="Projeto"
               value={selectedProjeto}
-              onChange={e => setSelectedProjeto(e.target.value)}
-              className="w-full md:w-80 px-4 py-2.5 rounded-xl bg-[#0f172a] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500 font-semibold"
-            >
-              <option value="">-- Selecione um Projeto --</option>
-              {projetos.map(p => (
-                <option key={p.id} value={p.id}>{p.nome} ({p.clientes?.nome})</option>
-              ))}
-            </select>
+              onChange={setSelectedProjeto}
+              options={opcoesProjetos(projetos)}
+              placeholder="-- Selecione um Projeto --"
+              vazio="Nenhum projeto encontrado"
+              wrapperClassName="w-full md:w-80"
+              className="w-full px-4 py-2.5 rounded-xl bg-[#0f172a] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500 font-semibold"
+            />
           )}
           
           <button 

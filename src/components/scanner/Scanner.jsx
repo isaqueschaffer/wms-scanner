@@ -4,6 +4,8 @@ import { useAudio } from '../../hooks/useAudio'
 import { useToast } from '../../hooks/useToast'
 import { ToastContainer } from '../ui/ToastContainer'
 import { ProductModal } from './ProductModal'
+import { SearchSelect } from '../ui/SearchSelect'
+import { opcoesProdutos } from '../ui/opcoesBusca'
 import * as XLSX from 'xlsx'
 import { Link } from 'react-router-dom'
 import {
@@ -136,7 +138,7 @@ export function Scanner({ session, onReset }) {
   // ── Buscar produtos ao montar ──────────────────────────────────────────────
   useEffect(() => {
     async function fetchProdutos() {
-      const { data } = await supabase.from('produtos').select('ean, nome').order('nome')
+      const { data } = await supabase.from('produtos').select('ean, nome, codigo, unidade, ncm, controla_sn').order('nome')
       if (data) setProdutosCadastrados(data)
     }
     fetchProdutos()
@@ -571,10 +573,10 @@ export function Scanner({ session, onReset }) {
                 
                 <div className="mt-6 flex flex-col gap-2">
                   <span className="text-slate-400 text-sm font-semibold uppercase tracking-wider text-center">Ou escolha manualmente</span>
-                  <select
+                  <SearchSelect
                     aria-label="Escolher produto manualmente"
-                    onChange={(e) => {
-                      const ean = e.target.value
+                    value=""
+                    onChange={(ean) => {
                       if (!ean) return
                       const prod = produtosCadastrados.find(p => p.ean === ean)
                       if (prod) {
@@ -582,14 +584,11 @@ export function Scanner({ session, onReset }) {
                          lockProduct(prod)
                       }
                     }}
-                    value=""
-                    className="w-full px-4 py-3 bg-[#0f172a] border border-[#1e3a5f] rounded-xl text-white text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 cursor-pointer shadow-lg"
-                  >
-                    <option value="">-- Selecione um produto --</option>
-                    {produtosCadastrados.map(p => (
-                      <option key={p.ean} value={p.ean}>{p.nome} (EAN: {p.ean})</option>
-                    ))}
-                  </select>
+                    options={opcoesProdutos(produtosCadastrados)}
+                    placeholder="-- Selecione um produto (nome, EAN ou SKU) --"
+                    vazio="Nenhum produto encontrado"
+                    className="w-full px-4 py-3 bg-[#0f172a] border border-[#1e3a5f] rounded-xl text-white text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 shadow-lg"
+                  />
                 </div>
               </div>
             ) : (

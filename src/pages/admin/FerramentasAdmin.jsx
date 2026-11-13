@@ -4,6 +4,7 @@ import { Loader2, Plus, PenTool, Edit, Trash2, History } from 'lucide-react'
 import { DataTable } from '../../components/ui/DataTable'
 import { Modal } from '../../components/ui/Modal'
 import { Field } from '../../components/ui/Field'
+import { SearchSelect } from '../../components/ui/SearchSelect'
 
 function FerramentaModal({ ferramenta, tipos, onClose, onUpdate }) {
   const isEditing = !!ferramenta
@@ -81,18 +82,16 @@ function FerramentaModal({ ferramenta, tipos, onClose, onUpdate }) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
               <Field label="Tipo de Ferramenta (Modelo) *">
-              <select
+              <SearchSelect
                 name="tipo_id"
                 value={tipoId}
-                onChange={e => setTipoId(e.target.value)}
+                onChange={setTipoId}
+                options={tipos.map(t => ({ value: t.id, label: t.nome, detalhe: t.categoria, busca: [t.categoria, t.descricao] }))}
+                placeholder="-- Selecione o Modelo --"
+                vazio="Nenhum modelo encontrado"
                 className="w-full px-4 py-3 rounded-xl bg-[#1e293b] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500"
                 required
-              >
-                <option value="">-- Selecione o Modelo --</option>
-                {tipos.map(t => (
-                  <option key={t.id} value={t.id}>{t.nome} - {t.categoria}</option>
-                ))}
-              </select>
+              />
               </Field>
               <p className="text-xs text-slate-400 mt-1">Crie novos modelos na tela de "Tipos de Ferramenta"</p>
             </div>

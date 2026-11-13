@@ -4,6 +4,8 @@ import { Loader2, ArrowRightLeft, Search, Edit, Trash2 } from 'lucide-react'
 import { DataTable } from '../../components/ui/DataTable'
 import { Modal } from '../../components/ui/Modal'
 import { Field } from '../../components/ui/Field'
+import { SearchSelect } from '../../components/ui/SearchSelect'
+import { opcoesProjetos, opcoesTecnicos } from '../../components/ui/opcoesBusca'
 
 function EditAlocacaoModal({ alocacao, tecnicos, onClose, onUpdate }) {
   const [tecnicoId, setTecnicoId] = useState(alocacao.tecnicos?.id || '')
@@ -56,27 +58,27 @@ function EditAlocacaoModal({ alocacao, tecnicos, onClose, onUpdate }) {
             </div>
           </div>
           <Field label="Técnico">
-            <select
+            <SearchSelect
               name="tecnico_id"
               value={tecnicoId}
-              onChange={e => setTecnicoId(e.target.value)}
+              onChange={setTecnicoId}
+              options={opcoesTecnicos(tecnicos)}
+              placeholder="-- Selecione --"
+              vazio="Nenhum técnico encontrado"
               className="w-full px-4 py-3 rounded-xl bg-[#1e293b] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500"
               required
-            >
-              <option value="">-- Selecione --</option>
-              {tecnicos.map(t => <option key={t.id} value={t.id}>{t.nome}</option>)}
-            </select>
+            />
           </Field>
           <Field label="Tarefa">
-            <select
+            <SearchSelect
               name="task_id"
               value={taskId}
-              onChange={e => setTaskId(e.target.value)}
+              onChange={setTaskId}
+              options={projTasks.map(t => ({ value: t.id, label: t.titulo }))}
+              placeholder="Nenhuma"
+              vazio="Nenhuma tarefa encontrada"
               className="w-full px-4 py-3 rounded-xl bg-[#1e293b] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500"
-            >
-              <option value="">Nenhuma</option>
-              {projTasks.map(t => <option key={t.id} value={t.id}>{t.titulo}</option>)}
-            </select>
+            />
           </Field>
           <Field label="Observação">
             <textarea
@@ -143,8 +145,8 @@ export function AlocacaoEquipamentosAdmin() {
   useEffect(() => {
     async function init() {
       const [resProj, resTec] = await Promise.all([
-        supabase.from('projetos').select('id, nome, clientes(nome)').order('nome'),
-        supabase.from('tecnicos').select('id, nome').eq('ativo', true).order('nome')
+        supabase.from('projetos').select('id, nome, servicos, clientes(nome, razao_social, cnpj_cpf, cidade, estado)').order('nome'),
+        supabase.from('tecnicos').select('id, nome, telefone').eq('ativo', true).order('nome')
       ])
       setProjetos(resProj.data || [])
       setTecnicos(resTec.data || [])
@@ -237,42 +239,42 @@ export function AlocacaoEquipamentosAdmin() {
           <form onSubmit={handleAllocate} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Field label="1. Selecione o Projeto">
-                <select
+                <SearchSelect
                   name="selected_projeto"
                   value={selectedProjeto}
-                  onChange={e => setSelectedProjeto(e.target.value)}
+                  onChange={setSelectedProjeto}
+                  options={opcoesProjetos(projetos)}
+                  placeholder="-- Escolha um Projeto --"
+                  vazio="Nenhum projeto encontrado"
                   className="w-full px-4 py-3 rounded-xl bg-[#1e293b] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500"
-                >
-                  <option value="">-- Escolha um Projeto --</option>
-                  {projetos.map(p => <option key={p.id} value={p.id}>{p.nome} ({p.clientes?.nome})</option>)}
-                </select>
+                />
               </Field>
 
               <Field label="2. Selecione o Técnico">
-                <select
+                <SearchSelect
                   name="selected_tecnico"
                   value={selectedTecnico}
-                  onChange={e => setSelectedTecnico(e.target.value)}
+                  onChange={setSelectedTecnico}
+                  options={opcoesTecnicos(tecnicos)}
+                  placeholder="-- Escolha o Técnico --"
+                  vazio="Nenhum técnico encontrado"
                   className="w-full px-4 py-3 rounded-xl bg-[#1e293b] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500"
-                >
-                  <option value="">-- Escolha o Técnico --</option>
-                  {tecnicos.map(t => <option key={t.id} value={t.id}>{t.nome}</option>)}
-                </select>
+                />
               </Field>
             </div>
 
             <div>
               <Field label="3. Tarefa (Opcional)">
-              <select
+              <SearchSelect
                 name="task_id"
                 value={selectedTask}
-                onChange={e => setSelectedTask(e.target.value)}
+                onChange={setSelectedTask}
+                options={tasks.map(t => ({ value: t.id, label: t.titulo }))}
                 disabled={!selectedProjeto || tasks.length === 0}
-                className="w-full px-4 py-3 rounded-xl bg-[#1e293b] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500 disabled:opacity-50"
-              >
-                <option value="">Nenhuma / Não especificada</option>
-                {tasks.map(t => <option key={t.id} value={t.id}>{t.titulo}</option>)}
-              </select>
+                placeholder="Nenhuma / Não especificada"
+                vazio="Nenhuma tarefa encontrada"
+                className="w-full px-4 py-3 rounded-xl bg-[#1e293b] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500"
+              />
               </Field>
               <p className="text-xs text-slate-400 mt-1">Você pode vincular esta saída de equipamento a uma task específica do Kanban.</p>
             </div>

@@ -5,6 +5,7 @@ import { useAudio } from '../../hooks/useAudio'
 import { useToast } from '../../hooks/useToast'
 import { useDocumentTitle } from '../../hooks/useDocumentTitle'
 import { ToastContainer } from '../ui/ToastContainer'
+import { SearchSelect } from '../ui/SearchSelect'
 import {
   Barcode, Hash, Package, Lock, Unlock, List, Undo2,
   CheckCircle2, RotateCcw, Loader2, MinusCircle, Trash,
@@ -64,7 +65,7 @@ export function RetiradaScanner() {
           .from('equipamentos')
           .select('id, ean, sn, quantidade, n_patrimonio, created_at, alocacao_equipamentos(id)')
           .eq('projeto_id', projetoId),
-        supabase.from('produtos').select('ean, nome, controla_sn'),
+        supabase.from('produtos').select('ean, nome, codigo, controla_sn'),
       ])
       if (!ativo) return
       if (resProj.error || resEquip.error || resProd.error) {
@@ -88,6 +89,7 @@ export function RetiradaScanner() {
       porEan[eq.ean] ??= {
         ean: eq.ean,
         nome: prod?.nome || 'Desconhecido',
+        codigo: prod?.codigo,
         semSn: prod?.controla_sn === false,
         disponivel: 0,
       }
@@ -429,19 +431,21 @@ export function RetiradaScanner() {
 
                 <div className="mt-6 flex flex-col gap-2">
                   <span className="text-slate-400 text-sm font-semibold uppercase tracking-wider text-center">Ou escolha manualmente</span>
-                  <select
+                  <SearchSelect
                     aria-label="Escolher produto manualmente"
-                    onChange={e => e.target.value && lockProduct(e.target.value)}
                     value=""
-                    className="w-full px-4 py-3 bg-[#0f172a] border border-[#1e3a5f] rounded-xl text-white text-sm focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/30 cursor-pointer shadow-lg"
-                  >
-                    <option value="">
-                      {produtosNoProjeto.length ? '-- Selecione um produto do projeto --' : 'Este projeto não tem produtos'}
-                    </option>
-                    {produtosNoProjeto.map(p => (
-                      <option key={p.ean} value={p.ean}>{p.nome} (EAN: {p.ean}) — {p.disponivel} un.</option>
-                    ))}
-                  </select>
+                    onChange={ean => ean && lockProduct(ean)}
+                    options={produtosNoProjeto.map(p => ({
+                      value: p.ean,
+                      label: p.nome,
+                      detalhe: [`EAN ${p.ean}`, p.codigo && `SKU ${p.codigo}`, `${p.disponivel} un. no projeto`].filter(Boolean).join(' · '),
+                      busca: [p.ean, p.codigo],
+                    }))}
+                    disabled={produtosNoProjeto.length === 0}
+                    placeholder={produtosNoProjeto.length ? '-- Selecione um produto do projeto (nome, EAN ou SKU) --' : 'Este projeto não tem produtos'}
+                    vazio="Nenhum produto do projeto encontrado"
+                    className="w-full px-4 py-3 bg-[#0f172a] border border-[#1e3a5f] rounded-xl text-white text-sm focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/30 shadow-lg"
+                  />
                 </div>
               </div>
             ) : (

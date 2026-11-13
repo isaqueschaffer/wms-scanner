@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { Users, FolderOpen, Loader2 } from 'lucide-react'
+import { SearchSelect } from '../ui/SearchSelect'
+import { opcoesClientes, opcoesProjetos } from '../ui/opcoesBusca'
 
 /**
  * Tela de setup: seleciona Cliente e Projeto antes de iniciar a bipagem.
@@ -18,7 +20,7 @@ export function SetupScreen({ onStart }) {
   useEffect(() => {
     supabase
       .from('clientes')
-      .select('id, nome')
+      .select('id, nome, razao_social, cnpj_cpf, cidade, estado')
       .order('nome')
       .then(({ data }) => {
         setClientes(data ?? [])
@@ -31,7 +33,7 @@ export function SetupScreen({ onStart }) {
     setLoadingProjects(true)
     supabase
       .from('projetos')
-      .select('id, nome')
+      .select('id, nome, servicos, escopo')
       .eq('cliente_id', clienteId)
       .order('nome')
       .then(({ data }) => {
@@ -76,22 +78,19 @@ export function SetupScreen({ onStart }) {
                 <label htmlFor="select-cliente" className="flex items-center gap-2 text-sm font-semibold text-slate-300 mb-2">
                   <Users size={14} className="text-blue-400" aria-hidden="true" /> Cliente
                 </label>
-                <select
+                <SearchSelect
                   id="select-cliente"
                   value={clienteId}
-                  onChange={e => setClienteId(e.target.value)}
+                  onChange={setClienteId}
+                  options={opcoesClientes(clientes)}
+                  placeholder="— Selecione o cliente —"
                   className="
                     w-full px-4 py-3 rounded-xl bg-[#0f172a] border border-[#1e3a5f]
                     text-white text-sm font-medium
                     focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30
-                    transition-all cursor-pointer
+                    transition-all
                   "
-                >
-                  <option value="">— Selecione o cliente —</option>
-                  {clientes.map(c => (
-                    <option key={c.id} value={c.id}>{c.nome}</option>
-                  ))}
-                </select>
+                />
               </div>
 
               {/* Projeto */}
@@ -100,27 +99,24 @@ export function SetupScreen({ onStart }) {
                   <FolderOpen size={14} className="text-blue-400" aria-hidden="true" /> Projeto
                 </label>
                 <div className="relative">
-                  <select
+                  <SearchSelect
                     id="select-projeto"
                     ref={projectRef}
                     value={projetoId}
-                    onChange={e => setProjetoId(e.target.value)}
+                    onChange={setProjetoId}
+                    options={opcoesProjetos(projetos)}
                     disabled={!clienteId || loadingProjects}
+                    placeholder="— Selecione o projeto —"
+                    vazio="Nenhum projeto encontrado"
                     className="
                       w-full px-4 py-3 rounded-xl bg-[#0f172a] border border-[#1e3a5f]
                       text-white text-sm font-medium
                       focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30
-                      disabled:opacity-40 disabled:cursor-not-allowed
-                      transition-all cursor-pointer
+                      transition-all
                     "
-                  >
-                    <option value="">— Selecione o projeto —</option>
-                    {projetos.map(p => (
-                      <option key={p.id} value={p.id}>{p.nome}</option>
-                    ))}
-                  </select>
+                  />
                   {loadingProjects && (
-                    <Loader2 size={16} className="animate-spin absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" aria-hidden="true" />
+                    <Loader2 size={16} className="animate-spin absolute right-10 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" aria-hidden="true" />
                   )}
                 </div>
               </div>

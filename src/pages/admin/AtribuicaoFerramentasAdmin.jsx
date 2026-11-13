@@ -4,6 +4,8 @@ import { Loader2, ArrowRightLeft, Plus, ArchiveRestore } from 'lucide-react'
 import { DataTable } from '../../components/ui/DataTable'
 import { Modal } from '../../components/ui/Modal'
 import { Field } from '../../components/ui/Field'
+import { SearchSelect } from '../../components/ui/SearchSelect'
+import { opcoesTecnicos } from '../../components/ui/opcoesBusca'
 
 function AtribuicaoModal({ atribuicao, ferramentas, tecnicos, atribuicoes, onClose, onUpdate }) {
   const isEditing = !!atribuicao
@@ -99,33 +101,34 @@ function AtribuicaoModal({ atribuicao, ferramentas, tecnicos, atribuicoes, onClo
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             
             <Field label="Técnico *" className="md:col-span-2">
-              <select
+              <SearchSelect
                 name="tecnico_id"
                 value={tecnicoId}
-                onChange={e => setTecnicoId(e.target.value)}
+                onChange={setTecnicoId}
+                options={opcoesTecnicos(tecnicos)}
+                placeholder="-- Selecione o Técnico --"
+                vazio="Nenhum técnico encontrado"
                 className="w-full px-4 py-3 rounded-xl bg-[#1e293b] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500"
                 required
-              >
-                <option value="">-- Selecione o Técnico --</option>
-                {tecnicos.map(t => <option key={t.id} value={t.id}>{t.nome}</option>)}
-              </select>
+              />
             </Field>
 
             <Field label="Ferramenta *" className="md:col-span-2">
-              <select
+              <SearchSelect
                 name="ferramenta_id"
                 value={ferramentaId}
-                onChange={e => setFerramentaId(e.target.value)}
+                onChange={setFerramentaId}
+                options={ferramentasDisponiveis.map(f => ({
+                  value: f.id,
+                  label: `${f.identificador ? `[${f.identificador}] ` : ''}${f.nome}`,
+                  detalhe: [f.categoria, f.quantidade != null && `Qtd. ${f.quantidade}`].filter(Boolean).join(' · '),
+                  busca: [f.identificador, f.categoria],
+                }))}
+                placeholder="-- Selecione a Ferramenta --"
+                vazio="Nenhuma ferramenta disponível encontrada"
                 className="w-full px-4 py-3 rounded-xl bg-[#1e293b] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500"
                 required
-              >
-                <option value="">-- Selecione a Ferramenta --</option>
-                {ferramentasDisponiveis.map(f => (
-                  <option key={f.id} value={f.id}>
-                    {f.identificador ? `[${f.identificador}] ` : ''}{f.nome} - {f.categoria}
-                  </option>
-                ))}
-              </select>
+              />
             </Field>
 
 
@@ -237,18 +240,16 @@ function TransferModal({ atribuicao, tecnicos, onClose, onUpdate }) {
     >
         <form onSubmit={handleTransfer} className="space-y-4">
           <Field label="Transferir para o Técnico *">
-            <select
+            <SearchSelect
               name="novo_tecnico_id"
               value={novoTecnicoId}
-              onChange={e => setNovoTecnicoId(e.target.value)}
+              onChange={setNovoTecnicoId}
+              options={opcoesTecnicos(tecnicos.filter(t => t.id !== atribuicao.tecnico_id))}
+              placeholder="-- Selecione o Novo Técnico --"
+              vazio="Nenhum técnico encontrado"
               className="w-full px-4 py-3 rounded-xl bg-[#1e293b] border border-[#1e3a5f] text-white focus:outline-none"
               required
-            >
-              <option value="">-- Selecione o Novo Técnico --</option>
-              {tecnicos.filter(t => t.id !== atribuicao.tecnico_id).map(t => (
-                <option key={t.id} value={t.id}>{t.nome}</option>
-              ))}
-            </select>
+            />
           </Field>
           <Field label="Observação (Opcional)">
             <input
@@ -292,7 +293,7 @@ export function AtribuicaoFerramentasAdmin() {
         `)
         .order('created_at', { ascending: false }),
       supabase.from('ferramentas').select('id, nome, categoria, quantidade, identificador').order('nome'),
-      supabase.from('tecnicos').select('id, nome').order('nome')
+      supabase.from('tecnicos').select('id, nome, telefone, ativo').order('nome')
     ])
 
     if (resAttr.data) setAtribuicoes(resAttr.data)

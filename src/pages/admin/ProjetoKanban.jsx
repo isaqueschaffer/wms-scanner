@@ -3,6 +3,8 @@ import { supabase } from '../../lib/supabase'
 import { Loader2, Plus, GripVertical, Pencil, Trash2 } from 'lucide-react'
 import { Modal } from '../../components/ui/Modal'
 import { Field } from '../../components/ui/Field'
+import { SearchSelect } from '../../components/ui/SearchSelect'
+import { opcoesProjetos, opcoesTecnicos } from '../../components/ui/opcoesBusca'
 
 const COLUMNS = [
   { id: 'todo', label: 'To Do', color: 'border-slate-500', bg: 'bg-slate-500/10' },
@@ -32,8 +34,8 @@ export function ProjetoKanban() {
   useEffect(() => {
     async function init() {
       const [resProj, resTec] = await Promise.all([
-        supabase.from('projetos').select('id, nome, clientes(nome)').order('nome'),
-        supabase.from('tecnicos').select('id, nome').eq('ativo', true).order('nome')
+        supabase.from('projetos').select('id, nome, servicos, clientes(nome, razao_social, cnpj_cpf, cidade, estado)').order('nome'),
+        supabase.from('tecnicos').select('id, nome, telefone').eq('ativo', true).order('nome')
       ])
       setProjetos(resProj.data || [])
       setTecnicos(resTec.data || [])
@@ -130,18 +132,17 @@ export function ProjetoKanban() {
         
         <div className="flex items-center gap-4 w-full md:w-auto">
           {loadingProjetos ? <Loader2 className="animate-spin text-blue-500" aria-label="Carregando projetos" role="status" /> : (
-            <select
+            <SearchSelect
               name="projeto_id"
               aria-label="Projeto"
               value={selectedProjeto}
-              onChange={e => setSelectedProjeto(e.target.value)}
-              className="w-full md:w-80 px-4 py-2.5 rounded-xl bg-[#0f172a] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500 font-semibold"
-            >
-              <option value="">-- Selecione um Projeto --</option>
-              {projetos.map(p => (
-                <option key={p.id} value={p.id}>{p.nome} ({p.clientes?.nome})</option>
-              ))}
-            </select>
+              onChange={setSelectedProjeto}
+              options={opcoesProjetos(projetos)}
+              placeholder="-- Selecione um Projeto --"
+              vazio="Nenhum projeto encontrado"
+              wrapperClassName="w-full md:w-80"
+              className="w-full px-4 py-2.5 rounded-xl bg-[#0f172a] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500 font-semibold"
+            />
           )}
           
           <button 
@@ -251,15 +252,15 @@ export function ProjetoKanban() {
               </select>
             </Field>
             <Field label="Atribuir Técnico">
-              <select
+              <SearchSelect
                 name="tecnico_id"
                 value={tecnicoId}
-                onChange={e => setTecnicoId(e.target.value)}
+                onChange={setTecnicoId}
+                options={opcoesTecnicos(tecnicos)}
+                placeholder="Não atribuído"
+                vazio="Nenhum técnico encontrado"
                 className="w-full px-4 py-3 rounded-xl bg-[#0f172a] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500"
-              >
-                <option value="">Não atribuído</option>
-                {tecnicos.map(t => <option key={t.id} value={t.id}>{t.nome}</option>)}
-              </select>
+              />
             </Field>
           </div>
           
