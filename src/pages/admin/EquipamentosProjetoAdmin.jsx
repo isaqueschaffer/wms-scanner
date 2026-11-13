@@ -234,7 +234,7 @@ export function EquipamentosProjetoAdmin() {
     // 1. Buscar detalhes do projeto e cliente
     const resProj = await supabase
       .from('projetos')
-      .select('nome, clientes(nome)')
+      .select('nome, cliente_id, clientes(nome)')
       .eq('id', id)
       .single()
       
@@ -304,7 +304,7 @@ export function EquipamentosProjetoAdmin() {
         items={[
           { label: 'Projetos', to: '/admin/projetos' },
           ...(projeto?.clientes?.nome
-            ? [{ label: projeto.clientes.nome, to: `/admin/projetos?q=${encodeURIComponent(projeto.clientes.nome)}` }]
+            ? [{ label: projeto.clientes.nome, to: `/admin/projetos?cliente=${projeto.cliente_id}` }]
             : []),
           { label: projeto?.nome || 'Carregando…' },
         ]}
