@@ -63,7 +63,7 @@ function EditAlocacaoModal({ alocacao, tecnicos, onClose, onUpdate }) {
               value={tecnicoId}
               onChange={setTecnicoId}
               options={opcoesTecnicos(tecnicos)}
-              placeholder="-- Selecione --"
+              placeholder="Pesquisar técnico…"
               vazio="Nenhum técnico encontrado"
               className="w-full px-4 py-3 rounded-xl bg-[#1e293b] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500"
               required
@@ -244,7 +244,7 @@ export function AlocacaoEquipamentosAdmin() {
                   value={selectedProjeto}
                   onChange={setSelectedProjeto}
                   options={opcoesProjetos(projetos)}
-                  placeholder="-- Escolha um Projeto --"
+                  placeholder="Pesquisar projeto ou cliente…"
                   vazio="Nenhum projeto encontrado"
                   className="w-full px-4 py-3 rounded-xl bg-[#1e293b] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500"
                 />
@@ -256,7 +256,7 @@ export function AlocacaoEquipamentosAdmin() {
                   value={selectedTecnico}
                   onChange={setSelectedTecnico}
                   options={opcoesTecnicos(tecnicos)}
-                  placeholder="-- Escolha o Técnico --"
+                  placeholder="Pesquisar técnico…"
                   vazio="Nenhum técnico encontrado"
                   className="w-full px-4 py-3 rounded-xl bg-[#1e293b] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500"
                 />

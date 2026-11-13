@@ -391,7 +391,7 @@ export function ProjetosAdmin() {
               value={clienteId}
               onChange={setClienteId}
               options={opcoesClientes(clientes)}
-              placeholder="— Selecione o cliente —"
+              placeholder="Pesquisar cliente (nome, CNPJ, cidade…)"
               vazio="Nenhum cliente encontrado"
               className="w-full px-4 py-3 rounded-xl bg-[#0f172a] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500"
             />

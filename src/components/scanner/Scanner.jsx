@@ -585,7 +585,7 @@ export function Scanner({ session, onReset }) {
                       }
                     }}
                     options={opcoesProdutos(produtosCadastrados)}
-                    placeholder="-- Selecione um produto (nome, EAN ou SKU) --"
+                    placeholder="Pesquisar produto (nome, EAN ou SKU)…"
                     vazio="Nenhum produto encontrado"
                     className="w-full px-4 py-3 bg-[#0f172a] border border-[#1e3a5f] rounded-xl text-white text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 shadow-lg"
                   />

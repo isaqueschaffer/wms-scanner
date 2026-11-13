@@ -164,8 +164,11 @@ export function SearchSelect({
           if (!aberto) setAberto(true)
         }}
         onKeyDown={onKeyDown}
+        style={{ paddingLeft: '2.5rem' }}
         className={`${className} pr-16 cursor-text disabled:opacity-40 disabled:cursor-not-allowed`}
       />
+      {/* Lupa sempre visível: deixa claro que dá para digitar e pesquisar */}
+      <Search size={16} aria-hidden="true" className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
       {name && <input type="hidden" name={name} value={value ?? ''} />}
 
       <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-slate-400">
@@ -182,9 +185,7 @@ export function SearchSelect({
             <X size={14} aria-hidden="true" />
           </button>
         )}
-        {aberto
-          ? <Search size={16} aria-hidden="true" className="pointer-events-none" />
-          : <ChevronDown size={16} aria-hidden="true" className="pointer-events-none" />}
+        <ChevronDown size={16} aria-hidden="true" className={`pointer-events-none transition-transform ${aberto ? 'rotate-180' : ''}`} />
       </div>
 
       {aberto && posicao && createPortal(

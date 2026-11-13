@@ -106,7 +106,7 @@ function AtribuicaoModal({ atribuicao, ferramentas, tecnicos, atribuicoes, onClo
                 value={tecnicoId}
                 onChange={setTecnicoId}
                 options={opcoesTecnicos(tecnicos)}
-                placeholder="-- Selecione o Técnico --"
+                placeholder="Pesquisar técnico…"
                 vazio="Nenhum técnico encontrado"
                 className="w-full px-4 py-3 rounded-xl bg-[#1e293b] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500"
                 required
@@ -124,7 +124,7 @@ function AtribuicaoModal({ atribuicao, ferramentas, tecnicos, atribuicoes, onClo
                   detalhe: [f.categoria, f.quantidade != null && `Qtd. ${f.quantidade}`].filter(Boolean).join(' · '),
                   busca: [f.identificador, f.categoria],
                 }))}
-                placeholder="-- Selecione a Ferramenta --"
+                placeholder="Pesquisar ferramenta (nome, identificador)…"
                 vazio="Nenhuma ferramenta disponível encontrada"
                 className="w-full px-4 py-3 rounded-xl bg-[#1e293b] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500"
                 required
@@ -245,7 +245,7 @@ function TransferModal({ atribuicao, tecnicos, onClose, onUpdate }) {
               value={novoTecnicoId}
               onChange={setNovoTecnicoId}
               options={opcoesTecnicos(tecnicos.filter(t => t.id !== atribuicao.tecnico_id))}
-              placeholder="-- Selecione o Novo Técnico --"
+              placeholder="Pesquisar técnico…"
               vazio="Nenhum técnico encontrado"
               className="w-full px-4 py-3 rounded-xl bg-[#1e293b] border border-[#1e3a5f] text-white focus:outline-none"
               required

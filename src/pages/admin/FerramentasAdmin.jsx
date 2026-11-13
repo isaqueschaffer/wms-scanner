@@ -87,7 +87,7 @@ function FerramentaModal({ ferramenta, tipos, onClose, onUpdate }) {
                 value={tipoId}
                 onChange={setTipoId}
                 options={tipos.map(t => ({ value: t.id, label: t.nome, detalhe: t.categoria, busca: [t.categoria, t.descricao] }))}
-                placeholder="-- Selecione o Modelo --"
+                placeholder="Pesquisar modelo…"
                 vazio="Nenhum modelo encontrado"
                 className="w-full px-4 py-3 rounded-xl bg-[#1e293b] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500"
                 required

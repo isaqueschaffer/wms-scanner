@@ -83,7 +83,7 @@ export function SetupScreen({ onStart }) {
                   value={clienteId}
                   onChange={setClienteId}
                   options={opcoesClientes(clientes)}
-                  placeholder="— Selecione o cliente —"
+                  placeholder="Pesquisar cliente (nome, CNPJ, cidade…)"
                   className="
                     w-full px-4 py-3 rounded-xl bg-[#0f172a] border border-[#1e3a5f]
                     text-white text-sm font-medium
@@ -106,7 +106,7 @@ export function SetupScreen({ onStart }) {
                     onChange={setProjetoId}
                     options={opcoesProjetos(projetos)}
                     disabled={!clienteId || loadingProjects}
-                    placeholder="— Selecione o projeto —"
+                    placeholder={clienteId ? 'Pesquisar projeto…' : 'Escolha o cliente primeiro'}
                     vazio="Nenhum projeto encontrado"
                     className="
                       w-full px-4 py-3 rounded-xl bg-[#0f172a] border border-[#1e3a5f]

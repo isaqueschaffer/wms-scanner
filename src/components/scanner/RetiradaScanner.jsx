@@ -442,7 +442,7 @@ export function RetiradaScanner() {
                       busca: [p.ean, p.codigo],
                     }))}
                     disabled={produtosNoProjeto.length === 0}
-                    placeholder={produtosNoProjeto.length ? '-- Selecione um produto do projeto (nome, EAN ou SKU) --' : 'Este projeto não tem produtos'}
+                    placeholder={produtosNoProjeto.length ? 'Pesquisar produto do projeto (nome, EAN ou SKU)…' : 'Este projeto não tem produtos'}
                     vazio="Nenhum produto do projeto encontrado"
                     className="w-full px-4 py-3 bg-[#0f172a] border border-[#1e3a5f] rounded-xl text-white text-sm focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/30 shadow-lg"
                   />

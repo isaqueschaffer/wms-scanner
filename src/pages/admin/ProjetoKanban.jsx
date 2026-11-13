@@ -138,7 +138,7 @@ export function ProjetoKanban() {
               value={selectedProjeto}
               onChange={setSelectedProjeto}
               options={opcoesProjetos(projetos)}
-              placeholder="-- Selecione um Projeto --"
+              placeholder="Pesquisar projeto ou cliente…"
               vazio="Nenhum projeto encontrado"
               wrapperClassName="w-full md:w-80"
               className="w-full px-4 py-2.5 rounded-xl bg-[#0f172a] border border-[#1e3a5f] text-white focus:outline-none focus:border-blue-500 font-semibold"
