@@ -41,6 +41,7 @@ SPA React 19 + Vite 8 + Tailwind 4 + react-router-dom 7 + lucide-react + xlsx, c
 ## Convenções de interface
 
 - Componentes compartilhados em `src/components/ui/`: `Modal` (acessível, fecha com Esc, prop `maxWidth`; não fecha clicando fora de propósito), `Field` (liga label ao input; o filho precisa ser o próprio input/select/textarea), `Breadcrumb`, `DataTable` (busca/datas/página/linhas ficam na URL via query params `q`, `de`, `ate`, `p`, `n`), `ToastContainer`. Hook `useDocumentTitle` (título da aba; sem título não mexe).
+- Escolha de entidade (cliente, projeto, técnico, produto, ferramenta, tarefa) usa `SearchSelect` (combobox com busca, lista em portal para não ser cortada pelo Modal), nunca `<select>` nativo. As opções vêm de `opcoesBusca.js` (`opcoesClientes`, `opcoesProjetos`, `opcoesTecnicos`, `opcoesProdutos`): `label`, `detalhe` e `busca` (atributos extras; números casam sem pontuação). `<select>` nativo só para listas fixas (estado, status, unidade, categoria).
 - Rotas são `React.lazy` em `App.jsx`; há rota 404. O menu lateral é agrupado em `AdminLayout.jsx` (`NAV_GROUPS`); adicione telas novas lá.
 - Botões só com ícone: sempre `aria-label` (e `title`); ícones decorativos com `aria-hidden="true"`. Links de navegação são `<Link>`, não `<a href>` nem botão.
 - Textos pequenos usam no mínimo `text-slate-400` sobre o fundo escuro (contraste); use `…` em vez de `...`; `tabular-nums` em números; datas com `'pt-BR'`.
